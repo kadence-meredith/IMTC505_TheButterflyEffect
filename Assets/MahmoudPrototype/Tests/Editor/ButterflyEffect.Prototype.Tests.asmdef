@@ -1,0 +1,7 @@
+{
+  "name": "ButterflyEffect.Prototype.Tests",
+  "references": ["ButterflyEffect.Prototype"],
+  "includePlatforms": ["Editor"],
+  "optionalUnityReferences": ["TestAssemblies"],
+  "autoReferenced": false
+}

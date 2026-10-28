@@ -1,0 +1,6 @@
+{
+  "name": "ButterflyEffect.Prototype.PlayModeTests",
+  "references": ["ButterflyEffect.Prototype", "Unity.XR.Interaction.Toolkit"],
+  "optionalUnityReferences": ["TestAssemblies"],
+  "autoReferenced": false
+}
