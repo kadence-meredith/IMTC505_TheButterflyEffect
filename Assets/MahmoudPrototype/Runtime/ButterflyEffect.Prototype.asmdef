@@ -1,0 +1,6 @@
+{
+  "name": "ButterflyEffect.Prototype",
+  "rootNamespace": "ButterflyEffect.Prototype",
+  "references": ["Unity.InputSystem", "Unity.XR.Interaction.Toolkit"],
+  "autoReferenced": true
+}

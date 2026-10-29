@@ -1,0 +1,7 @@
+{
+  "name": "ButterflyEffect.Prototype.Editor",
+  "rootNamespace": "ButterflyEffect.Prototype.Editor",
+  "references": ["ButterflyEffect.Prototype", "Unity.XR.Interaction.Toolkit"],
+  "includePlatforms": ["Editor"],
+  "autoReferenced": true
+}

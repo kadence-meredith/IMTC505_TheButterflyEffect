@@ -1,0 +1,10 @@
+﻿<Solution>
+  <Project Path="ButterflyEffect.Prototype.csproj" />
+  <Project Path="ButterflyEffect.Prototype.Editor.csproj" />
+  <Project Path="Unity.XR.Interaction.Toolkit.Samples.StarterAssets.csproj" />
+  <Project Path="Assembly-CSharp.csproj" />
+  <Project Path="ButterflyEffect.Prototype.Tests.csproj" />
+  <Project Path="Unity.XR.Interaction.Toolkit.Samples.StarterAssets.Editor.csproj" />
+  <Project Path="ButterflyEffect.Prototype.PlayModeTests.csproj" />
+  <Project Path="Assembly-CSharp-Editor.csproj" />
+</Solution>
