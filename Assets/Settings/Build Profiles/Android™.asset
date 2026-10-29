@@ -20,8 +20,17 @@ MonoBehaviour:
     rid: -2
   m_ActivePlatformGuid: 
   m_AdditionalPlatformBuildSettings: []
-  m_OverrideGlobalSceneList: 0
-  m_Scenes: []
+  m_OverrideGlobalSceneList: 1
+  m_Scenes:
+  - m_enabled: 1
+    m_path: Assets/Kadence Playground/Campus - Kadence.unity
+    m_guid: e1b559d68c3c2474483d629f2152ad7f
+  - m_enabled: 1
+    m_path: Assets/Kadence Playground/Campsite-Kadence.unity
+    m_guid: 6ea9b2a0c2496ef4b8aeba0063a29c6d
+  - m_enabled: 1
+    m_path: Assets/Kadence Playground/Fire Campus - Kadence.unity
+    m_guid: 6fe2bf0927862d845b34587da7c4188d
   m_HasScriptingDefines: 0
   m_ScriptingDefines: []
   m_PlayerSettingsYaml:

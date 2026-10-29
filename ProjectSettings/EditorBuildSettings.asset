@@ -8,6 +8,15 @@ EditorBuildSettings:
   - enabled: 1
     path: Assets/Scenes/SampleScene.unity
     guid: 99c9720ab356a0642a771bea13969a05
+  - enabled: 1
+    path: Assets/Kadence Playground/Campus - Kadence.unity
+    guid: e1b559d68c3c2474483d629f2152ad7f
+  - enabled: 1
+    path: Assets/Kadence Playground/Campsite-Kadence.unity
+    guid: 6ea9b2a0c2496ef4b8aeba0063a29c6d
+  - enabled: 1
+    path: Assets/Kadence Playground/Fire Campus - Kadence.unity
+    guid: 6fe2bf0927862d845b34587da7c4188d
   m_configObjects:
     com.unity.input.settings.actions: {fileID: -944628639613478452, guid: 052faaac586de48259a63d0c4782560b, type: 3}
     com.unity.xr.management.loader_settings: {fileID: 11400000, guid: 2408604fb97e8894fbd313eaca03f873, type: 2}
