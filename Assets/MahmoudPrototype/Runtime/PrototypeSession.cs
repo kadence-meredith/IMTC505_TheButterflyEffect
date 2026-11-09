@@ -1,5 +1,6 @@
 using UnityEngine;
 using UnityEngine.Events;
+using UnityEngine.SceneManagement;
 
 namespace ButterflyEffect.Prototype
 {
@@ -13,8 +14,38 @@ namespace ButterflyEffect.Prototype
         public string message = "You will need a free hand for that marshmallow. Dispose of the cigarette, or drop it.";
         public static PrototypeSession Instance { get; private set; }
 
-        private void Awake() { Instance = this; }
-        private void OnDestroy() { if (Instance == this) Instance = null; }
+        private void Awake()
+{
+    if (Instance != null && Instance != this)
+    {
+        Destroy(gameObject);
+        return;
+    }
+
+    Instance = this;
+    DontDestroyOnLoad(gameObject);
+
+    SceneManager.sceneLoaded += OnSceneLoaded;
+}
+
+private void OnSceneLoaded(Scene scene, LoadSceneMode mode)
+{
+    if (scene.name == "Campus_Start")
+    {
+        state = new ChoiceState();
+        showDebrief = false;
+    }
+}
+
+private void OnDestroy()
+{
+    SceneManager.sceneLoaded -= OnSceneLoaded;
+
+    if (Instance == this)
+    {
+        Instance = null;
+    }
+}
         public void Changed() { onStateChanged.Invoke(); }
         public void Say(string text) { message = text; Changed(); }
         public void ShowDebrief() { showDebrief = !showDebrief; }
