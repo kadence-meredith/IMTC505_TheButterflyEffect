@@ -218,6 +218,40 @@ namespace ButterflyEffect.Prototype
             if (throwGuide != null) throwGuide.enabled = false;
         }
 
+private void OnGUI()
+{
+    if (!inputEnabled || view == null || !view.isActiveAndEnabled)
+        return;
+
+    float x = Screen.width * 0.5f;
+    float y = Screen.height * 0.5f;
+
+    Color previous = GUI.color;
+
+    GUI.color = Color.black;
+    GUI.DrawTexture(
+        new Rect(x - 4f, y - 4f, 8f, 8f),
+        Texture2D.whiteTexture
+    );
+
+    GUI.color = targetItem != null || targetButton != null
+        ? Color.green
+        : Color.white;
+
+    GUI.DrawTexture(
+        new Rect(x - 2f, y - 2f, 4f, 4f),
+        Texture2D.whiteTexture
+    );
+
+    GUI.color = previous;
+}
+
+private void OnApplicationFocus(bool hasFocus)
+{
+    if (!hasFocus)
+        EndLook();
+}
+
         private void EndLook() { isLooking = false; Cursor.lockState = CursorLockMode.None; Cursor.visible = true; }
         private void OnDisable() { DropHeld(false); EndLook(); }
     }
