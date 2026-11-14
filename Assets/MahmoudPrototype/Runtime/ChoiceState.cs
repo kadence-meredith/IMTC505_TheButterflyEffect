@@ -4,7 +4,7 @@ namespace ButterflyEffect.Prototype
 {
     public enum CigaretteCondition { Held, Dropped, Disposed }
     public enum FireCondition { Cold, Burning, HotEmbers }
-    public enum EndingRule { OriginalPitch, RemainingHazards }
+    public enum EndingRule { OriginalPitch, RemainingHazards, CampsiteFinal }
     public enum CampusEnding { Thriving, Threatened, Burning, Devastated }
     public enum FireSource { Campfire, CigaretteGrass, FireworksGrass }
 
@@ -21,6 +21,16 @@ namespace ButterflyEffect.Prototype
         public bool fireworksGrassBurning;
         public int marshmallowsEaten;
         public int fireworksLaunched;
+        public int totalActions;
+        public int itemsPickedUp;
+        public int itemsReleased;
+        public int cigaretteDisposals;
+        public int firesLit;
+        public int bucketRefills;
+        public int poursStarted;
+        public int rawMarshmallowsEaten;
+        public int goldenMarshmallowsEaten;
+        public int burntMarshmallowsEaten;
 
         public void RecordCigarette(CigaretteCondition condition, bool outsideBin = false)
         {
@@ -38,10 +48,15 @@ namespace ButterflyEffect.Prototype
         {
             fireworksEverLaunched = true;
             fireworksLaunched++;
+            totalActions++;
         }
 
         public int UnsafeStations(EndingRule rule)
         {
+            if (rule == EndingRule.CampsiteFinal)
+                return (cigaretteDroppedOutsideBin || cigarette != CigaretteCondition.Disposed || cigaretteGrassBurning ? 1 : 0)
+                    + (campfire != FireCondition.Cold ? 1 : 0)
+                    + (fireworksEverLaunched ? 1 : 0);
             if (rule == EndingRule.OriginalPitch)
                 return (cigaretteDroppedOutsideBin || cigarette != CigaretteCondition.Disposed ? 1 : 0)
                     + (campfireEverLit ? 1 : 0) + (fireworksEverLaunched ? 1 : 0);

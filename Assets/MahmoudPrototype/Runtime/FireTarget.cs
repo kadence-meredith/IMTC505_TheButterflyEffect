@@ -1,11 +1,15 @@
+using System.Collections.Generic;
 using UnityEngine;
 
 namespace ButterflyEffect.Prototype
 {
     public sealed class FireTarget : MonoBehaviour, IPrototypeResettable
     {
+        private static readonly List<FireTarget> activeTargets = new List<FireTarget>();
+        public static IReadOnlyList<FireTarget> ActiveTargets => activeTargets;
         public FireSource source;
         public FireProgress progress = new FireProgress();
+        public FireCondition startingCondition = FireCondition.Cold;
         public GameObject flames;
         public GameObject embers;
         public float catchRadius = 0.9f;
@@ -16,53 +20,44 @@ namespace ButterflyEffect.Prototype
         public bool IsHot => progress.condition == FireCondition.Burning;
         public bool CanRoast(Vector3 point) => IsHot && Vector3.Distance(point, transform.TransformPoint(heatOffset)) < heatRadius;
 
-        private void Start() { Refresh(); }
+        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
+        private static void ClearRegistry() { activeTargets.Clear(); }
+        private void OnEnable() { if (!activeTargets.Contains(this)) activeTargets.Add(this); }
+        private void OnDisable() { activeTargets.Remove(this); }
+        private void Start()
+        {
+            if (startingCondition == FireCondition.Burning) progress.Ignite();
+            else { progress.Reset(); progress.condition = startingCondition; }
+            Refresh();
+        }
         private void Update()
         {
             if (progress.condition != FireCondition.HotEmbers) return;
             emberIdle += Time.deltaTime;
-            if (emberIdle >= emberReigniteDelay)
-            {
-                Ignite();
-                if (PrototypeSession.Instance != null) PrototypeSession.Instance.Say("The embers were still hot. The fire has reignited.");
-            }
+            if (emberIdle >= emberReigniteDelay) Ignite();
         }
         public void Ignite()
         {
             if (progress.condition == FireCondition.Burning) return;
             emberIdle = 0f; progress.Ignite(); Refresh();
         }
-
-        public void LeaveUnlit()
-        {
-            PrototypeSession session = PrototypeSession.Instance;
-            if (session == null) return;
-            session.Say(progress.condition == FireCondition.Cold && !session.state.campfireEverLit
-                ? "You respected the fire ban and left the campfire unlit."
-                : "The campfire has already been lit. Check that its flames and embers are out before leaving.");
-        }
+        public void LeaveUnlit() { }
 
         public bool ReceiveWater(Vector3 groundPoint, float amount)
         {
             Vector3 d = groundPoint - transform.position;
-            if (new Vector2(d.x, d.z).magnitude > catchRadius || Mathf.Abs(d.y) > 1.1f) return false;
-            if (progress.condition == FireCondition.Cold) return false;
+            if (new Vector2(d.x, d.z).magnitude > catchRadius || Mathf.Abs(d.y) > 1.4f) return false;
+            if (progress.condition == FireCondition.Cold || amount <= 0f) return false;
             FireCondition before = progress.condition;
-            emberIdle = 0f;
-            progress.Pour(amount);
+            emberIdle = 0f; progress.Pour(amount);
             if (before != progress.condition) Refresh();
-            PrototypeSession session = PrototypeSession.Instance;
-            if (session != null && before != progress.condition)
-                session.Say(progress.condition == FireCondition.HotEmbers
-                    ? "The flames are gone, but the embers are still hot. Keep pouring."
-                    : "The fire and embers are fully extinguished.");
             return true;
         }
 
         private void Refresh()
         {
-            if (flames != null) flames.SetActive(progress.condition == FireCondition.Burning);
-            if (embers != null) embers.SetActive(progress.condition != FireCondition.Cold);
+            SetVisual(flames, progress.condition == FireCondition.Burning);
+            SetVisual(embers, progress.condition != FireCondition.Cold);
             PrototypeSession session = PrototypeSession.Instance;
             if (session == null) return;
             if (source == FireSource.Campfire) session.state.RecordCampfire(progress.condition);
@@ -71,6 +66,21 @@ namespace ButterflyEffect.Prototype
             session.Changed();
         }
 
-        public void ResetPrototype() { emberIdle = 0f; progress.Reset(); Refresh(); }
+        private static void SetVisual(GameObject visual, bool visible)
+        {
+            if (visual == null || visual.activeSelf == visible) return;
+            visual.SetActive(visible);
+            if (!visible) return;
+            foreach (ParticleSystem particles in visual.GetComponentsInChildren<ParticleSystem>(true))
+            { particles.Clear(true); particles.Play(true); }
+        }
+
+        public void ResetPrototype()
+        {
+            emberIdle = 0f; progress.Reset();
+            if (startingCondition == FireCondition.Burning) progress.Ignite();
+            else progress.condition = startingCondition;
+            Refresh();
+        }
     }
 }

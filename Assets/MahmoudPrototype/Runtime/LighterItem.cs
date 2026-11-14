@@ -5,17 +5,19 @@ namespace ButterflyEffect.Prototype
     public sealed class LighterItem : PrototypeItem
     {
         public Transform tip;
-        public override string HeldHint => "F: light a nearby campfire   |   E: drop lighter";
+        public override string HeldHint => "F: light campfire | E: drop";
         public override void Use()
         {
-            foreach (FireTarget fire in FindObjectsByType<FireTarget>(FindObjectsSortMode.None))
-                if (fire.source == FireSource.Campfire && Vector3.Distance(tip.position, fire.transform.position + Vector3.up * 0.5f) < 2.1f)
-                {
-                    fire.Ignite();
-                    if (Session != null) Session.Say("Campfire lit. Hold a marshmallow over the heat to roast it.");
-                    return;
-                }
-            if (Session != null) Session.Say("Bring the lighter closer to the campfire, then press F.");
+            Vector3 position = tip != null ? tip.position : transform.position;
+            foreach (FireTarget fire in FireTarget.ActiveTargets)
+            {
+                if (fire == null || fire.source != FireSource.Campfire || fire.IsHot) continue;
+                if (Vector3.Distance(position, fire.transform.TransformPoint(fire.heatOffset)) > 2.1f) continue;
+                fire.Ignite();
+                if (Session != null)
+                { Session.state.firesLit++; Session.state.totalActions++; Session.Changed(); }
+                return;
+            }
         }
     }
 }

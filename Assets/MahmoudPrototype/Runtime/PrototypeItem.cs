@@ -39,10 +39,12 @@ namespace ButterflyEffect.Prototype
         {
             IsHeld = true;
             HeldInXR = xr;
+            if (Session != null) { Session.state.itemsPickedUp++; Session.state.totalActions++; Session.Changed(); }
         }
 
         public virtual void Released()
         {
+            if (IsHeld && Session != null) { Session.state.itemsReleased++; Session.state.totalActions++; Session.Changed(); }
             IsHeld = false;
             HeldInXR = false;
         }

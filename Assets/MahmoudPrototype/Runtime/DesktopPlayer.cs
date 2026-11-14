@@ -12,6 +12,7 @@ namespace ButterflyEffect.Prototype
         public CigaretteItem startingCigarette;
         public Transform[] stationSpawns;
         public float moveSpeed = 3.3f;
+        public float cigaretteMoveSpeed = 1.25f;
         public float lookSensitivity = 0.11f;
         public float reach = 3.5f;
         [HideInInspector] public bool inputEnabled = true;
@@ -52,7 +53,8 @@ namespace ButterflyEffect.Prototype
             }
             Vector3 move = new Vector3((keys.dKey.isPressed ? 1 : 0) - (keys.aKey.isPressed ? 1 : 0), 0,
                 (keys.wKey.isPressed ? 1 : 0) - (keys.sKey.isPressed ? 1 : 0));
-            move = transform.TransformDirection(Vector3.ClampMagnitude(move, 1f)) * moveSpeed;
+            float speed = Held is CigaretteItem ? Mathf.Min(moveSpeed, cigaretteMoveSpeed) : moveSpeed;
+            move = transform.TransformDirection(Vector3.ClampMagnitude(move, 1f)) * speed;
             if (motor.isGrounded && verticalSpeed < 0f) verticalSpeed = -2f;
             verticalSpeed += Physics.gravity.y * Time.deltaTime;
             motor.Move((move + Vector3.up * verticalSpeed) * Time.deltaTime);
@@ -82,7 +84,7 @@ namespace ButterflyEffect.Prototype
             if (keys.digit3Key.wasPressedThisFrame) GoToStation(2);
             if (keys.digit4Key.wasPressedThisFrame) GoToStation(3);
             if (keys.backspaceKey.wasPressedThisFrame && PrototypeSession.Instance != null) PrototypeSession.Instance.ResetRun();
-            if (keys.tabKey.wasPressedThisFrame && PrototypeSession.Instance != null) PrototypeSession.Instance.ShowDebrief();
+            // No prototype debrief overlay in the final campsite.
         }
 
         private void ScanTarget()
@@ -94,6 +96,7 @@ namespace ButterflyEffect.Prototype
             Array.Sort(hits, (a, b) => a.distance.CompareTo(b.distance));
             foreach (RaycastHit hit in hits)
             {
+                if (hit.transform.IsChildOf(transform)) continue;
                 if (Held != null && hit.transform.IsChildOf(Held.transform)) continue;
                 targetItem = hit.collider.GetComponentInParent<PrototypeItem>();
                 targetButton = hit.collider.GetComponentInParent<PrototypeButton>();
@@ -122,7 +125,12 @@ namespace ButterflyEffect.Prototype
 
         public void GrabStartingCigarette()
         {
-            if (startingCigarette != null && !startingCigarette.IsDisposed && startingCigarette.gameObject.activeInHierarchy) Grab(startingCigarette);
+            if (startingCigarette == null || startingCigarette.IsDisposed || !startingCigarette.gameObject.activeInHierarchy) return;
+            PrototypeSession session = PrototypeSession.Instance;
+            int actions = session != null ? session.state.totalActions : 0;
+            int pickups = session != null ? session.state.itemsPickedUp : 0;
+            Grab(startingCigarette);
+            if (session != null) { session.state.totalActions = actions; session.state.itemsPickedUp = pickups; }
         }
 
         public void Grab(PrototypeItem item)
@@ -253,6 +261,15 @@ private void OnApplicationFocus(bool hasFocus)
 }
 
         private void EndLook() { isLooking = false; Cursor.lockState = CursorLockMode.None; Cursor.visible = true; }
-        private void OnDisable() { DropHeld(false); EndLook(); }
+        private void OnDisable()
+        {
+            PrototypeSession session = PrototypeSession.Instance;
+            int actions = session != null ? session.state.totalActions : 0;
+            int releases = session != null ? session.state.itemsReleased : 0;
+            DropHeld(false);
+            // Automatic release during a scene change is not a player action.
+            if (session != null) { session.state.totalActions = actions; session.state.itemsReleased = releases; }
+            EndLook();
+        }
     }
 }
