@@ -1,0 +1,402 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d0461ae8cc57c4fcfa17e881596ab450, type: 3}
+  m_Name: ButterflyGuidance_English
+  m_EditorClassIdentifier: Assembly-CSharp::ButterflyEffect.Guidance.GuidanceLibrary
+  lines:
+  - id: campus.opening
+    context: "Campus \u2014 opening title"
+    speaker: Butterfly
+    text: Stay close. I have something to show you.
+    choices:
+    - label: Begin
+      nextId: campus.portal
+      action: 
+    nextId: 
+  - id: campus.butterfly
+    context: "Campus \u2014 butterfly appears"
+    speaker: Butterfly
+    text: Stay close. I have something to show you.
+    choices: []
+    nextId: campus.portal
+  - id: campus.portal
+    context: "Campus \u2014 approaching the portal"
+    speaker: Butterfly
+    text: What happens beyond this courtyard can reach the places we call home.
+    choices: []
+    nextId: portal.enter
+  - id: portal.enter
+    context: "Portal \u2014 interaction prompt"
+    speaker: Butterfly
+    text: Touch the portal to enter the forest.
+    choices:
+    - label: Touch the portal
+      nextId: forest.arrival
+      action: portal.enter
+    nextId: 
+  - id: forest.arrival
+    context: "Forest \u2014 arrival"
+    speaker: Butterfly
+    text: "Look around. There\u2019s something waiting for you."
+    choices: []
+    nextId: forest.hub
+  - id: forest.hub
+    context: "Forest \u2014 exploration objective"
+    speaker: Butterfly
+    text: Explore the campsite.
+    choices:
+    - label: The cigarette
+      nextId: 
+      action: explore.cigarette
+    - label: Campfire & marshmallows
+      nextId: 
+      action: explore.campfire
+    - label: Water bucket
+      nextId: 
+      action: explore.bucket
+    - label: Canada Day fireworks
+      nextId: 
+      action: explore.fireworks
+    - label: Look for the disposal bin
+      nextId: 
+      action: explore.bin
+    - label: Return portal
+      nextId: return.prompt
+      action: 
+    nextId: 
+  - id: cigarette.hand
+    context: "Cigarette \u2014 in hand"
+    speaker: Butterfly
+    text: "You\u2019ll need a free hand for that marshmallow."
+    choices:
+    - label: Keep holding it
+      nextId: forest.hub
+      action: 
+    - label: Drop it
+      nextId: cigarette.ground
+      action: cigarette.drop
+    nextId: 
+  - id: cigarette.ground
+    context: "Cigarette \u2014 on the ground"
+    speaker: Butterfly
+    text: The cigarette is on the ground. You can still pick it up.
+    choices:
+    - label: Pick it up
+      nextId: cigarette.picked
+      action: cigarette.pickup
+    - label: Visit the campfire
+      nextId: 
+      action: explore.campfire
+    - label: Explore the campsite
+      nextId: forest.hub
+      action: 
+    nextId: 
+  - id: cigarette.picked
+    context: "Cigarette \u2014 picked up"
+    speaker: Butterfly
+    text: The cigarette is back in your hand.
+    choices:
+    - label: Look for the disposal bin
+      nextId: 
+      action: explore.bin
+    - label: Explore the campsite
+      nextId: forest.hub
+      action: 
+    nextId: 
+  - id: cigarette.bin
+    context: "Cigarette disposal bin \u2014 found"
+    speaker: Butterfly
+    text: Finally. Somewhere to put this.
+    choices:
+    - label: Dispose of the cigarette
+      nextId: cigarette.disposed
+      action: cigarette.dispose
+    - label: Leave
+      nextId: forest.hub
+      action: 
+    nextId: 
+  - id: cigarette.bin-empty
+    context: Cigarette disposal bin
+    speaker: Butterfly
+    text: The cigarette is still on the ground. Pick it up before using the bin.
+    choices:
+    - label: Go back to the cigarette
+      nextId: cigarette.ground
+      action: 
+    - label: Leave
+      nextId: forest.hub
+      action: 
+    nextId: 
+  - id: cigarette.disposed
+    context: "Cigarette \u2014 disposed"
+    speaker: Butterfly
+    text: The cigarette is safely in the disposal bin. Your hand is free.
+    choices:
+    - label: Visit the campfire
+      nextId: 
+      action: explore.campfire
+    - label: Explore the campsite
+      nextId: forest.hub
+      action: 
+    nextId: 
+  - id: campfire.approach
+    context: "Campfire \u2014 approaching"
+    speaker: Butterfly
+    text: A warm fire. A bag of marshmallows. Stay a little longer.
+    choices:
+    - label: Pick up a marshmallow
+      nextId: campfire.roasting
+      action: marshmallow.pickup
+    - label: Check the water bucket
+      nextId: 
+      action: explore.bucket
+    - label: Leave
+      nextId: forest.hub
+      action: 
+    nextId: 
+  - id: campfire.roasting
+    context: "Marshmallow \u2014 roasting"
+    speaker: Butterfly
+    text: Almost golden. Just a little longer.
+    choices:
+    - label: Keep roasting
+      nextId: campfire.roasting
+      action: marshmallow.roast
+    - label: Take a bite
+      nextId: campfire.eaten
+      action: marshmallow.eat
+    - label: Leave
+      nextId: forest.hub
+      action: 
+    nextId: 
+  - id: campfire.eaten
+    context: "Marshmallow \u2014 after eating"
+    speaker: Butterfly
+    text: That was good. One more?
+    choices:
+    - label: Roast another
+      nextId: campfire.roasting
+      action: marshmallow.pickup
+    - label: Leave
+      nextId: forest.hub
+      action: 
+    nextId: 
+  - id: campfire.cold
+    context: "Campfire \u2014 cold"
+    speaker: Butterfly
+    text: The campfire is cold. No fire hazard remains here.
+    choices:
+    - label: Explore the campsite
+      nextId: forest.hub
+      action: 
+    nextId: 
+  - id: bucket.ready
+    context: Water bucket
+    speaker: Butterfly
+    text: A water bucket sits beside the campfire.
+    choices:
+    - label: Pick up
+      nextId: bucket.held
+      action: bucket.pickup
+    - label: Leave
+      nextId: forest.hub
+      action: 
+    nextId: 
+  - id: bucket.held
+    context: "Water bucket \u2014 held"
+    speaker: Butterfly
+    text: The bucket is ready.
+    choices:
+    - label: Pour water
+      nextId: 
+      action: bucket.pour
+    - label: Leave
+      nextId: forest.hub
+      action: 
+    nextId: 
+  - id: bucket.embers
+    context: "Campfire \u2014 hot embers"
+    speaker: Butterfly
+    text: The flames were gone. The embers were still hot.
+    choices:
+    - label: Stir and pour again
+      nextId: 
+      action: bucket.stir-pour
+    - label: Leave
+      nextId: forest.hub
+      action: 
+    nextId: 
+  - id: bucket.cold
+    context: "Campfire \u2014 cold"
+    speaker: Butterfly
+    text: The embers are cold. This fire is out.
+    choices:
+    - label: Explore the campsite
+      nextId: forest.hub
+      action: 
+    nextId: 
+  - id: fireworks.approach
+    context: "Canada Day \u2014 approaching the fireworks"
+    speaker: Butterfly
+    text: "It\u2019s Canada Day. Let\u2019s light up the sky."
+    choices:
+    - label: Light the fireworks
+      nextId: fireworks.watch
+      action: fireworks.light
+    - label: Leave them unlit
+      nextId: forest.hub
+      action: 
+    nextId: 
+  - id: fireworks.watch
+    context: "Canada Day \u2014 watching the fireworks"
+    speaker: Butterfly
+    text: "Look up. The show\u2019s starting."
+    choices: []
+    nextId: fireworks.again
+  - id: fireworks.again
+    context: "Canada Day \u2014 after the display"
+    speaker: Butterfly
+    text: That was beautiful. Another one?
+    choices:
+    - label: Light another
+      nextId: fireworks.watch
+      action: fireworks.light
+    - label: Leave
+      nextId: forest.hub
+      action: 
+    nextId: 
+  - id: return.prompt
+    context: Return portal
+    speaker: Butterfly
+    text: Ready to head back?
+    choices:
+    - label: Return to campus
+      nextId: return.butterfly
+      action: 
+    - label: Stay a little longer
+      nextId: forest.hub
+      action: 
+    nextId: 
+  - id: return.butterfly
+    context: "Return portal \u2014 butterfly"
+    speaker: Butterfly
+    text: "Come with me. Let\u2019s see what followed us home."
+    choices: []
+    nextId: campus.reveal
+  - id: campus.reveal
+    context: "Campus \u2014 reveal"
+    speaker: Butterfly
+    text: Back where we started. But something has changed.
+    choices:
+    - label: See what changed
+      nextId: 
+      action: ending.evaluate
+    nextId: 
+  - id: ending.thriving
+    context: Thriving
+    speaker: Butterfly
+    text: 'A Place Protected
+
+      The courtyard is full of life.
+
+      You enjoyed the campsite and left no fire hazards behind.'
+    choices: []
+    nextId: debrief.question
+  - id: ending.threatened
+    context: Threatened
+    speaker: Butterfly
+    text: 'A Fragile Future
+
+      The courtyard still stands. Smoke hangs in the air.
+
+      Something you left behind is still burning.'
+    choices: []
+    nextId: debrief.question
+  - id: ending.burning
+    context: Burning
+    speaker: Butterfly
+    text: 'The Spark Came Home
+
+      Fire has reached the courtyard.
+
+      What you left in the forest has reached a place you call home.'
+    choices: []
+    nextId: debrief.question
+  - id: ending.devastated
+    context: Devastated
+    speaker: Butterfly
+    text: 'What We Leave Behind
+
+      The courtyard you knew is almost unrecognizable.
+
+      A moment of distraction. A place changed forever.'
+    choices: []
+    nextId: debrief.question
+  - id: debrief.question
+    context: Ending debrief
+    speaker: Butterfly
+    text: What followed you home?
+    choices: []
+    nextId: debrief.next
+  - id: debrief.cigarette
+    context: Cigarette left behind
+    speaker: Butterfly
+    text: The cigarette you left behind ignited the dry grass.
+    choices: []
+    nextId: debrief.next
+  - id: debrief.campfire
+    context: Campfire left burning
+    speaker: Butterfly
+    text: "Your marshmallow was finished. The fire wasn\u2019t.\nAfter you left, sparks from the fire reached the dry grass."
+    choices: []
+    nextId: debrief.next
+  - id: debrief.embers
+    context: Hot embers left behind
+    speaker: Butterfly
+    text: 'The flames were gone. The embers were still hot.
+
+      They reignited after you left.'
+    choices: []
+    nextId: debrief.next
+  - id: debrief.fireworks
+    context: Fireworks ignited the grass
+    speaker: Butterfly
+    text: You watched the colours in the sky. A spark landed in the dry grass below.
+    choices: []
+    nextId: debrief.next
+  - id: debrief.thriving
+    context: A place protected
+    speaker: Butterfly
+    text: You left no unresolved fire hazards at the campsite.
+    choices: []
+    nextId: debrief.next
+  - id: debrief.close
+    context: Shared closing line
+    speaker: Butterfly
+    text: The forest may feel far away. The places we care about are connected.
+    choices:
+    - label: Try another path
+      nextId: 
+      action: session.restart
+    - label: Finish
+      nextId: session.finished
+      action: session.finish
+    nextId: 
+  - id: session.finished
+    context: The Butterfly Effect
+    speaker: Butterfly
+    text: Small choices. Significant consequences.
+    choices:
+    - label: Try another path
+      nextId: 
+      action: session.restart
+    nextId: 

@@ -1,0 +1,12 @@
+Ulysses Butterfly — eb78 (E.A.Cornell)
+Source: https://sketchfab.com/3d-models/ulysses-butterfly-1155effb97564974aa0553db3d5eed57
+Creator: https://sketchfab.com/E.A.Cornell
+License: Creative Commons Attribution-ShareAlike 4.0 International (CC BY-SA 4.0)
+https://creativecommons.org/licenses/by-sa/4.0/
+
+Original model downloaded using the authorized Sketchfab download on 2026-10-28.
+Adaptation: converted to native Unity meshes, material and animation; presentation scale/rotation adjusted. Model adaptations retain CC BY-SA 4.0.
+Original model description credits the texture source: PapilioUlyssesTelegonusMUpUnAC1.jpg by Accassidy, CC BY-SA 4.0, via Wikimedia Commons.
+https://commons.wikimedia.org/wiki/File:PapilioUlyssesTelegonusMUpUnAC1.jpg
+
+This attribution/license file is part of the model assets. Keep it when sharing the model.

@@ -1,0 +1,194 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!1 &806195736406411108
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 8628638540473478334}
+  - component: {fileID: 3956064642347333898}
+  m_Layer: 0
+  m_Name: Butterfly visual - bobbing only
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &8628638540473478334
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 806195736406411108}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children:
+  - {fileID: 8102822744928055518}
+  m_Father: {fileID: 8054353187254969430}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &3956064642347333898
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 806195736406411108}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: eba7c6b67a85f4342bced5b914a493ca, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::ButterflyEffect.Guidance.GuidanceButterfly
+  floatGently: 1
+--- !u!1 &9154626348592086884
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 8054353187254969430}
+  - component: {fileID: 7806316264046145977}
+  m_Layer: 0
+  m_Name: ButterflyPointGuide
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &8054353187254969430
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 9154626348592086884}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children:
+  - {fileID: 8628638540473478334}
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &7806316264046145977
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 9154626348592086884}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 389408f35f88f46bbac55dc7b9fda590, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::ButterflyEffect.Guidance.ButterflyPointGuide
+  user: {fileID: 0}
+  points: []
+  flightHeight: 1.4
+  moveSpeed: 1.1
+  rotationSpeed: 150
+  pointArrivalDistance: 0.05
+  maxLeadDistance: 3
+  resumeLeadDistance: 2.2
+  userArrivalDistance: 1.3
+  horizontalUserDistance: 1
+  autoAdvance: 1
+  playOnStart: 0
+  onPointReached:
+    m_PersistentCalls:
+      m_Calls: []
+  onUserReachedPoint:
+    m_PersistentCalls:
+      m_Calls: []
+  onRouteFinished:
+    m_PersistentCalls:
+      m_Calls: []
+  onLeadPause:
+    m_PersistentCalls:
+      m_Calls: []
+  onLeadResume:
+    m_PersistentCalls:
+      m_Calls: []
+--- !u!1001 &19987054074263258
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 8628638540473478334}
+    m_Modifications:
+    - target: {fileID: 772941293618298929, guid: f4050da105b50425abcc113e373b0e59, type: 3}
+      propertyPath: m_Name
+      value: UlyssesButterfly
+      objectReference: {fileID: 0}
+    - target: {fileID: 8085087530465592836, guid: f4050da105b50425abcc113e373b0e59, type: 3}
+      propertyPath: m_LocalScale.x
+      value: 0.28939188
+      objectReference: {fileID: 0}
+    - target: {fileID: 8085087530465592836, guid: f4050da105b50425abcc113e373b0e59, type: 3}
+      propertyPath: m_LocalScale.y
+      value: 0.28939188
+      objectReference: {fileID: 0}
+    - target: {fileID: 8085087530465592836, guid: f4050da105b50425abcc113e373b0e59, type: 3}
+      propertyPath: m_LocalScale.z
+      value: 0.28939188
+      objectReference: {fileID: 0}
+    - target: {fileID: 8085087530465592836, guid: f4050da105b50425abcc113e373b0e59, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: -0.0011127422
+      objectReference: {fileID: 0}
+    - target: {fileID: 8085087530465592836, guid: f4050da105b50425abcc113e373b0e59, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: -0.07202302
+      objectReference: {fileID: 0}
+    - target: {fileID: 8085087530465592836, guid: f4050da105b50425abcc113e373b0e59, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: -0.028510988
+      objectReference: {fileID: 0}
+    - target: {fileID: 8085087530465592836, guid: f4050da105b50425abcc113e373b0e59, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: -0.000000043337433
+      objectReference: {fileID: 0}
+    - target: {fileID: 8085087530465592836, guid: f4050da105b50425abcc113e373b0e59, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: 0.0000000057054814
+      objectReference: {fileID: 0}
+    - target: {fileID: 8085087530465592836, guid: f4050da105b50425abcc113e373b0e59, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: 0.9914449
+      objectReference: {fileID: 0}
+    - target: {fileID: 8085087530465592836, guid: f4050da105b50425abcc113e373b0e59, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: 0.1305262
+      objectReference: {fileID: 0}
+    - target: {fileID: 8085087530465592836, guid: f4050da105b50425abcc113e373b0e59, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8085087530465592836, guid: f4050da105b50425abcc113e373b0e59, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8085087530465592836, guid: f4050da105b50425abcc113e373b0e59, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents: []
+  m_SourcePrefab: {fileID: 100100000, guid: f4050da105b50425abcc113e373b0e59, type: 3}
+--- !u!4 &8102822744928055518 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 8085087530465592836, guid: f4050da105b50425abcc113e373b0e59, type: 3}
+  m_PrefabInstance: {fileID: 19987054074263258}
+  m_PrefabAsset: {fileID: 0}

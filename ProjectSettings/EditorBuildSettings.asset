@@ -6,6 +6,24 @@ EditorBuildSettings:
   serializedVersion: 2
   m_Scenes:
   - enabled: 1
+    path: Assets/Main Scenes/0_CampusStart_Main.unity
+    guid: 182abfbaf3c02b046901cc5c3ef80725
+  - enabled: 1
+    path: Assets/Main Scenes/1_Campsite_Main.unity
+    guid: b74e8c6c95513b24d977fd0bfcab001c
+  - enabled: 1
+    path: Assets/Main Scenes/2_CampusFire_Main.unity
+    guid: ec465e3fe5c178544af707fbe6661b37
+  - enabled: 1
+    path: Assets/Main Scenes/3_CampusFire_Main.unity
+    guid: 52f2a011b76839946b76de165a5e9268
+  - enabled: 1
+    path: Assets/Main Scenes/4_CampusFire_Main.unity
+    guid: f293a72521ee3d442b1461928d3e1596
+  - enabled: 1
+    path: Assets/Main Scenes/5_CampusEnd_Main.unity
+    guid: 8c3822cd4cde5f746b30c2aa5ec413ae
+  - enabled: 1
     path: Assets/Scenes/SampleScene.unity
     guid: 99c9720ab356a0642a771bea13969a05
   - enabled: 1
@@ -17,12 +35,6 @@ EditorBuildSettings:
   - enabled: 1
     path: Assets/Kadence Playground/Fire Campus - Kadence.unity
     guid: 6fe2bf0927862d845b34587da7c4188d
-  - enabled: 1
-    path: Assets/Main Scenes/0_CampusStart_Main.unity
-    guid: 182abfbaf3c02b046901cc5c3ef80725
-  - enabled: 1
-    path: Assets/Main Scenes/1_Campsite_Main.unity
-    guid: b74e8c6c95513b24d977fd0bfcab001c
   m_configObjects:
     com.unity.input.settings.actions: {fileID: -944628639613478452, guid: 052faaac586de48259a63d0c4782560b, type: 3}
     com.unity.xr.management.loader_settings: {fileID: 11400000, guid: 2408604fb97e8894fbd313eaca03f873, type: 2}
