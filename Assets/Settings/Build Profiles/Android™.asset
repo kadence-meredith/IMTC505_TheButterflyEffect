@@ -31,6 +31,12 @@ MonoBehaviour:
   - m_enabled: 1
     m_path: Assets/Kadence Playground/Fire Campus - Kadence.unity
     m_guid: 6fe2bf0927862d845b34587da7c4188d
+  - m_enabled: 1
+    m_path: Assets/Main Scenes/0_CampusStart_Main.unity
+    m_guid: 182abfbaf3c02b046901cc5c3ef80725
+  - m_enabled: 1
+    m_path: Assets/Main Scenes/1_Campsite_Main.unity
+    m_guid: b74e8c6c95513b24d977fd0bfcab001c
   m_HasScriptingDefines: 0
   m_ScriptingDefines: []
   m_PlayerSettingsYaml:
