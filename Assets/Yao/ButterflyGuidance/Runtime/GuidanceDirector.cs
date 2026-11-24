@@ -74,6 +74,24 @@ namespace ButterflyEffect.Guidance
                 return;
             }
 
+            PresentLine(line);
+        }
+
+        public void ShowRuntimeLine(GuidanceLine line)
+        {
+            if (line == null || string.IsNullOrEmpty(line.id)) return;
+            if (line.id == "campfire.approach" || line.id == "campfire.roasting")
+            {
+                if (State.Cigarette == CigaretteStatus.Holding) { Show("cigarette.hand"); return; }
+                if (State.Campfire == CampfireStatus.Cold) { Show("campfire.cold"); return; }
+            }
+            PresentLine(line);
+        }
+
+        private void PresentLine(GuidanceLine line)
+        {
+            string id = line.id;
+
             if (id.StartsWith("forest.", StringComparison.Ordinal)
                 || id.StartsWith("cigarette.", StringComparison.Ordinal)
                 || id.StartsWith("campfire.", StringComparison.Ordinal)

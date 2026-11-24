@@ -115,7 +115,9 @@ namespace ButterflyEffect.Guidance
                     // from the clear space just in front of the return portal instead.
                     position = new Vector3(-.436f,
                         setup.playerSpawn != null ? setup.playerSpawn.position.y : .1038f, .65f);
-                    Transform arrival = FindStation("forest.arrival");
+                    Transform arrival = FindStation(bridge != null && bridge.UsesSequentialExploration
+                        ? "cigarette." : "forest.arrival");
+                    if (arrival == null) arrival = FindStation("forest.arrival");
                     Vector3 heading = arrival != null ? arrival.position - position : Vector3.forward;
                     heading.y = 0f;
                     if (heading.sqrMagnitude > .001f) rotation = Quaternion.LookRotation(heading);
@@ -150,7 +152,17 @@ namespace ButterflyEffect.Guidance
             {
                 Transform arrival = FindStation("forest.arrival");
                 coordinator.guide.flightHeight = 1.6f;
-                if (arrival != null)
+                Transform first = bridge != null && bridge.UsesSequentialExploration ? FindStation("cigarette.") : null;
+                if (first != null)
+                {
+                    Vector3 direction = first.position - desktopPlayer.transform.position;
+                    direction.y = 0f;
+                    if (direction.sqrMagnitude < .001f) direction = desktopPlayer.transform.forward;
+                    Vector3 position = desktopPlayer.transform.position + direction.normalized * 1.3f;
+                    position.y = first.position.y + coordinator.guide.flightHeight;
+                    coordinator.guide.transform.position = position;
+                }
+                else if (arrival != null)
                     coordinator.guide.transform.position = arrival.position + Vector3.up * coordinator.guide.flightHeight;
             }
 

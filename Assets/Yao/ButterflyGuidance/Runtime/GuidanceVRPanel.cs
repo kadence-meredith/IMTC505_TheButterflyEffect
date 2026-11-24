@@ -83,6 +83,7 @@ namespace ButterflyEffect.Guidance
                 DialogueCanvas.gameObject.AddComponent<TrackedDeviceGraphicRaycaster>();
 
             EnsureXRInput();
+            if (view.IsExplorationMode) view.SetExplorationMode(true);
             SnapToPlayer();
         }
 

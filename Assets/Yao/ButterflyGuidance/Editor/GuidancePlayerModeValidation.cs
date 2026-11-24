@@ -90,6 +90,14 @@ namespace ButterflyEffect.Guidance.Editor
             {
                 DesktopPlayer authoredPlayer = fixture.ExistingPlayer;
                 Camera authoredCamera = authoredPlayer.view;
+                var first = new GameObject("First cigarette stop").transform;
+                first.SetParent(fixture.Root.transform, false);
+                first.position = new Vector3(-.96f, .1f, 2.65f);
+                fixture.Coordinator.stations = fixture.Coordinator.stations.Concat(new[]
+                {
+                    new GuidanceStationBinding { name = "Cigarette", target = first,
+                        dialoguePrefixes = new[] { "cigarette." } }
+                }).ToArray();
                 fixture.Mode.mode = GuidanceControlMode.Desktop;
                 fixture.Mode.ApplyMode();
                 Require(fixture.Mode.desktopPlayer == authoredPlayer && fixture.Mode.PlayerCamera == authoredCamera,
@@ -97,6 +105,9 @@ namespace ButterflyEffect.Guidance.Editor
                 Require(fixture.Setup.player == authoredPlayer && fixture.Bridge.setup == fixture.Setup
                     && authoredPlayer.startingCigarette == fixture.Setup.cigarette,
                     "Physical campsite item actions are bound to a different player.");
+                Vector3 towardGuide = fixture.Coordinator.guide.transform.position - authoredCamera.transform.position;
+                Require(Vector3.Dot(authoredCamera.transform.forward, towardGuide.normalized) > .98f,
+                    "The first butterfly is outside the computer player's opening view.");
                 Require(fixture.Root.GetComponentsInChildren<DesktopPlayer>(true).Length == 1,
                     "Activating the campsite created a duplicate player.");
                 CheckDesktopBindings(fixture);

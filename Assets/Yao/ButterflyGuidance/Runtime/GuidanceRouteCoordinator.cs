@@ -36,6 +36,7 @@ namespace ButterflyEffect.Guidance
         public bool IsTravelling { get; private set; }
         public string PendingLineId { get; private set; } = string.Empty;
         public Transform CurrentStation { get; private set; }
+        public bool IndependentExploration { get; private set; }
 
         private GuidanceDirector subscribedDirector;
         private ButterflyPointGuide subscribedGuide;
@@ -60,6 +61,7 @@ namespace ButterflyEffect.Guidance
         /// <summary>Resolve the current line after enabling or assigning this adapter manually.</summary>
         public void RefreshRoute()
         {
+            if (IndependentExploration) return;
             EnsureSubscriptions();
             if (director == null || director.Current == null)
             {
@@ -72,6 +74,7 @@ namespace ButterflyEffect.Guidance
 
         private void Update()
         {
+            if (IndependentExploration) return;
             if (!IsTravelling) return;
             EnsureSubscriptions();
             if (director == null || view == null || activeGuide == null
@@ -104,6 +107,7 @@ namespace ButterflyEffect.Guidance
 
         private void OnLineChanged(GuidanceLine line)
         {
+            if (IndependentExploration) return;
             if (line == null) return;
             EnsureSubscriptions();
             var binding = FindBinding(line.id);
@@ -164,6 +168,20 @@ namespace ButterflyEffect.Guidance
                 }
             }
             return best;
+        }
+
+        public void SetIndependentExploration(bool independent)
+        {
+            if (IndependentExploration == independent) return;
+            CancelActiveTravel();
+            IndependentExploration = independent;
+            ResumeView();
+            if (!independent) RefreshRoute();
+        }
+
+        public Transform[] RouteBetween(Transform from, Transform destination)
+        {
+            return FindRoute(from, destination);
         }
 
         private Transform[] FindRoute(Transform from, Transform destination)

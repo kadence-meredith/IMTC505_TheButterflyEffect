@@ -26,6 +26,10 @@ namespace ButterflyEffect.Guidance
         public string startingSceneName = "0_CampusStart_Main";
         public GuidanceReturnPortal returnPortal;
         public Transform cigaretteGroundAnchor;
+        public bool sequentialExploration = true;
+        public GuidanceCampsiteSequence campsiteSequence;
+
+        public bool UsesSequentialExploration => role == GuidanceSceneRole.Campsite && sequentialExploration;
 
         public bool WaitingForPhysicalAction { get; private set; }
         public string PendingPhysicalLine => queuedPhysicalLine ?? string.Empty;
@@ -72,6 +76,13 @@ namespace ButterflyEffect.Guidance
             initializationFrame = Time.frameCount;
             queuedPhysicalLine = null;
             WaitingForPhysicalAction = false;
+            if (UsesSequentialExploration)
+            {
+                if (campsiteSequence == null) campsiteSequence = GetComponent<GuidanceCampsiteSequence>();
+                if (campsiteSequence == null) campsiteSequence = gameObject.AddComponent<GuidanceCampsiteSequence>();
+                campsiteSequence.Initialize(this);
+                return;
+            }
             ShowLine(!string.IsNullOrEmpty(initialDialogueId) ? initialDialogueId
                 : role == GuidanceSceneRole.CampusStart ? "campus.opening"
                 : role == GuidanceSceneRole.Campsite ? "forest.arrival" : "campus.reveal");
@@ -83,6 +94,13 @@ namespace ButterflyEffect.Guidance
             SubscribeSession();
             SyncFromSession();
             UpdateCigaretteAnchor();
+            if (UsesSequentialExploration && campsiteSequence != null && campsiteSequence.IsInitialized)
+            {
+                // Exploration handles nearby props immediately, independently of the suggested route.
+                previous = Capture();
+                queuedPhysicalLine = null;
+                return;
+            }
             Snapshot current = Capture();
             // Starting item selections and FireTarget.Start are setup, not player choices.
             if (Time.frameCount > initializationFrame + 1)
@@ -160,8 +178,9 @@ namespace ButterflyEffect.Guidance
         /// <summary>Fully handles real-scene choices before any standalone demo action runs.</summary>
         public bool HandleChoice(GuidanceChoice choice)
         {
-            if (choice == null || director == null || WaitingForPhysicalAction
-                || coordinator != null && coordinator.IsTravelling) return true;
+            if (choice == null || director == null) return true;
+            if (!UsesSequentialExploration && (WaitingForPhysicalAction
+                || coordinator != null && coordinator.IsTravelling)) return true;
             SyncFromSession();
             string action = choice.action ?? string.Empty;
             if (action.StartsWith("explore.", StringComparison.Ordinal))
@@ -230,6 +249,14 @@ namespace ButterflyEffect.Guidance
                     }
                     WaitForPhysicalAction();
                     return true;
+                case "marshmallow.finish":
+                    if (!UsesSequentialExploration || campsiteSequence == null) return true;
+                    if (setup != null && setup.player != null && setup.player.isActiveAndEnabled
+                        && setup.marshmallow != null && setup.player.Held == setup.marshmallow)
+                        setup.player.DropHeld(false);
+                    campsiteSequence.FinishRoasting();
+                    if (view != null) view.SetExplorationContext(false);
+                    return true;
                 case "bucket.pickup":
                     if (setup != null && setup.bucket != null)
                     {
@@ -272,6 +299,7 @@ namespace ButterflyEffect.Guidance
 
         public bool HandleAdvance()
         {
+            if (UsesSequentialExploration) return true;
             if (director == null || WaitingForPhysicalAction
                 || coordinator != null && coordinator.IsTravelling) return true;
             if (director.Current == null) { Initialize(); return true; }
@@ -297,8 +325,16 @@ namespace ButterflyEffect.Guidance
                     ShowLine(setup != null && setup.cigarette != null && setup.cigarette.IsDisposed ? "cigarette.disposed"
                         : CigaretteHeld() ? "cigarette.hand" : "cigarette.ground"); break;
                 case "campfire": case "fire": case "marshmallow": case "marshmallows":
+                    if (UsesSequentialExploration && setup != null && setup.marshmallow != null
+                        && setup.marshmallow.IsHeld) { ShowRoastingStatus(); break; }
                     ShowLine("campfire.approach"); break;
                 case "bucket": case "water":
+                    if (UsesSequentialExploration)
+                    {
+                        ShowLine(setup != null && setup.bucket != null && setup.bucket.IsHeld
+                            ? "bucket.held" : "bucket.ready");
+                        break;
+                    }
                     ShowLine(CampfireCold() ? "bucket.cold"
                         : session != null && session.state.campfire == FireCondition.HotEmbers ? "bucket.embers"
                         : setup != null && setup.bucket != null && setup.bucket.IsHeld ? "bucket.held" : "bucket.ready"); break;
@@ -323,11 +359,40 @@ namespace ButterflyEffect.Guidance
             WaitingForPhysicalAction = false;
             if (view != null && (coordinator == null || !coordinator.IsTravelling)) view.ResumeDialogue();
             SyncFromSession();
+            if (UsesSequentialExploration && director.library != null
+                && (id == "campfire.roasting" || id == "campfire.eaten"
+                    || id == "campfire.cold" && campsiteSequence != null && campsiteSequence.RoastingActive))
+            {
+                GuidanceLine authored = director.library.Find(id);
+                if (authored != null)
+                {
+                    var choices = new List<GuidanceChoice>();
+                    foreach (var choice in authored.choices ?? Array.Empty<GuidanceChoice>())
+                        if (choice != null && !string.IsNullOrEmpty(choice.action)) choices.Add(choice);
+                    choices.Add(new GuidanceChoice { label = "Finish roasting", action = "marshmallow.finish" });
+                    director.ShowRuntimeLine(new GuidanceLine
+                    {
+                        id = authored.id, context = authored.context, speaker = authored.speaker,
+                        text = authored.text, choices = choices.ToArray()
+                    });
+                    return;
+                }
+            }
             director.Show(id);
+        }
+
+        public void ShowRoastingStatus(bool afterEating = false)
+        {
+            ShowLine(afterEating ? "campfire.eaten" : CampfireCold() ? "campfire.cold" : "campfire.roasting");
         }
 
         private void WaitForPhysicalAction()
         {
+            if (UsesSequentialExploration)
+            {
+                WaitingForPhysicalAction = false;
+                return;
+            }
             WaitingForPhysicalAction = true;
             physicalWaitUntil = Time.unscaledTime + 8f;
             // Reuse the authored line. No controls, status labels, or added instructions.
