@@ -1,0 +1,5 @@
+Lighter - Low Poly by calebcram
+Model source: https://skfb.ly/ootzQ
+Creative Commons Attribution 4.0 International: https://creativecommons.org/licenses/by/4.0/
+
+The Butterfly Effect adapts the model with Unity URP materials and a new scale and placement for the campsite interaction.
