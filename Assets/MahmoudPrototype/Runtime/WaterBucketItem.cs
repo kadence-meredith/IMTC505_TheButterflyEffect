@@ -11,6 +11,9 @@ namespace ButterflyEffect.Prototype
         public float capacity = 7f;
         public float waterLeft = 7f;
         public float pourRate = 1.4f;
+        [Tooltip("Distance from the full water surface to the bottom of this bucket.")]
+        [SerializeField, Min(0f)] private float surfaceTravel;
+        private float fullSurfaceHeight;
         private bool desktopPour;
         private bool wasPouring;
         private float desktopTiltAngle;
@@ -19,13 +22,37 @@ namespace ButterflyEffect.Prototype
         public override void DesktopTilt(bool held) { desktopPour = held; }
         public override void Grabbed(bool xr) { base.Grabbed(xr); desktopTiltAngle = 0f; }
 
+        protected override void Awake()
+        {
+            base.Awake();
+            if (waterSurface != null) fullSurfaceHeight = waterSurface.localPosition.y;
+        }
+
+        private void LateUpdate() => RefreshWaterSurface();
+
+        private void RefreshWaterSurface()
+        {
+            if (waterSurface == null) return;
+            if (surfaceTravel > 0f)
+            {
+                float fill = capacity > 0f ? Mathf.Clamp01(waterLeft / capacity) : 0f;
+                Vector3 position = waterSurface.localPosition;
+                float height = fullSurfaceHeight - surfaceTravel * (1f - fill);
+                if (position.y != height)
+                {
+                    position.y = height;
+                    waterSurface.localPosition = position;
+                }
+            }
+            waterSurface.gameObject.SetActive(waterLeft > 0.02f);
+        }
+
         private void Update()
         {
             if (IsHeld && !HeldInXR)
                 desktopTiltAngle = Mathf.MoveTowards(desktopTiltAngle, desktopPour ? 75f : 0f, Time.deltaTime * 240f);
             bool pouring = IsHeld && waterLeft > 0f && spout != null && Vector3.Angle(transform.up, Vector3.up) > 45f;
             if (stream != null) stream.enabled = pouring;
-            if (waterSurface != null) waterSurface.gameObject.SetActive(waterLeft > 0.02f);
             if (pouring && !wasPouring && Session != null)
             { Session.state.poursStarted++; Session.state.totalActions++; Session.Changed(); }
             wasPouring = pouring;
@@ -52,6 +79,7 @@ namespace ButterflyEffect.Prototype
         {
             if (refillPoint == null || Vector3.Distance(transform.position, refillPoint.position) > 1.8f || waterLeft >= capacity - 0.01f) return;
             waterLeft = capacity;
+            RefreshWaterSurface();
             if (Session != null) { Session.state.bucketRefills++; Session.state.totalActions++; Session.Changed(); }
         }
         public override void Released()
@@ -60,7 +88,7 @@ namespace ButterflyEffect.Prototype
         {
             base.ResetPrototype(); waterLeft = capacity; desktopPour = false; wasPouring = false; desktopTiltAngle = 0f;
             if (stream != null) stream.enabled = false;
-            if (waterSurface != null) waterSurface.gameObject.SetActive(true);
+            RefreshWaterSurface();
         }
     }
 }
