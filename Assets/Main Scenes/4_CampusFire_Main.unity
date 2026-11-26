@@ -33948,7 +33948,7 @@ PrefabInstance:
       objectReference: {fileID: 2100000, guid: db5e018569c9242feb9de56f6eb2cfc5, type: 2}
     - target: {fileID: 1380709433151721159, guid: 1260f19bf6d064e8ca473bd251f07d17, type: 3}
       propertyPath: m_AnchorMax.x
-      value: 1
+      value: 0.92
       objectReference: {fileID: 0}
     - target: {fileID: 1380709433151721159, guid: 1260f19bf6d064e8ca473bd251f07d17, type: 3}
       propertyPath: m_AnchorMax.y
@@ -33956,7 +33956,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 1380709433151721159, guid: 1260f19bf6d064e8ca473bd251f07d17, type: 3}
       propertyPath: m_AnchorMin.x
-      value: 0
+      value: 0.08
       objectReference: {fileID: 0}
     - target: {fileID: 1380709433151721159, guid: 1260f19bf6d064e8ca473bd251f07d17, type: 3}
       propertyPath: m_AnchorMin.y
@@ -33972,7 +33972,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 1745296130164289498, guid: 1260f19bf6d064e8ca473bd251f07d17, type: 3}
       propertyPath: m_FontData.m_MinSize
-      value: 28
+      value: 32
       objectReference: {fileID: 0}
     - target: {fileID: 1745296130164289498, guid: 1260f19bf6d064e8ca473bd251f07d17, type: 3}
       propertyPath: m_FontData.m_FontSize
@@ -34124,7 +34124,7 @@ PrefabInstance:
       objectReference: {fileID: 2100000, guid: db5e018569c9242feb9de56f6eb2cfc5, type: 2}
     - target: {fileID: 5681890688410486919, guid: 1260f19bf6d064e8ca473bd251f07d17, type: 3}
       propertyPath: choiceFontSize
-      value: 24
+      value: 32
       objectReference: {fileID: 0}
     - target: {fileID: 6242286313268620893, guid: 1260f19bf6d064e8ca473bd251f07d17, type: 3}
       propertyPath: m_Pivot.x
@@ -34347,6 +34347,8 @@ MonoBehaviour:
   startingSceneName: 0_CampusStart_Main
   returnPortal: {fileID: 0}
   cigaretteGroundAnchor: {fileID: 0}
+  sequentialExploration: 1
+  campsiteSequence: {fileID: 0}
 --- !u!114 &1377975913
 MonoBehaviour:
   m_ObjectHideFlags: 0

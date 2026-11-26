@@ -79,7 +79,7 @@ namespace ButterflyEffect.Guidance.Editor
             view.headingFont = AssetDatabase.LoadAssetAtPath<Font>(Root + "/Art/GuidanceSerif.ttf");
             view.bodyFont = AssetDatabase.LoadAssetAtPath<Font>(Root + "/Art/GuidanceSans.ttf");
             view.Build();
-            AddUlysses(system.transform);
+            AddButterfly(system.transform);
             // The reusable prefab contains only dialogue, options and the actual butterfly.
             PrefabUtility.SaveAsPrefabAsset(system, PrefabPath);
             UnityEngine.Object.DestroyImmediate(system);
@@ -114,25 +114,22 @@ namespace ButterflyEffect.Guidance.Editor
             BuildBatch();
         }
 
-        private static void AddUlysses(Transform parent)
+        private static void AddButterfly(Transform parent)
         {
             var prefab = AssetDatabase.LoadAssetAtPath<GameObject>(UlyssesModelBake.PrefabPath);
-            if (prefab == null) throw new InvalidOperationException("The native Ulysses Butterfly prefab is missing.");
-            var guide = new GameObject("Ulysses Butterfly").AddComponent<GuidanceButterfly>();
+            if (prefab == null || prefab.GetComponent<LowPolyButterflyWings>() == null)
+            {
+                LowPolyButterflyBuilder.Build();
+                prefab = AssetDatabase.LoadAssetAtPath<GameObject>(UlyssesModelBake.PrefabPath);
+            }
+            var guide = new GameObject("Low-poly Butterfly").AddComponent<GuidanceButterfly>();
             guide.transform.SetParent(parent, false);
             var model = (GameObject)PrefabUtility.InstantiatePrefab(prefab);
             model.transform.SetParent(guide.transform, false);
-            model.transform.localRotation = Quaternion.AngleAxis(165, Vector3.forward) * Quaternion.Euler(-65, -20, 0);
-            var renderers = model.GetComponentsInChildren<Renderer>();
-            Bounds bounds = renderers[0].bounds;
-            foreach (var renderer in renderers.Skip(1)) bounds.Encapsulate(renderer.bounds);
-            float scale = 3.6f / Mathf.Max(bounds.size.x, bounds.size.y, bounds.size.z);
-            model.transform.localScale *= scale;
-            bounds = renderers[0].bounds;
-            foreach (var renderer in renderers.Skip(1)) bounds.Encapsulate(renderer.bounds);
-            model.transform.position -= bounds.center;
+            LowPolyButterflyBuilder.NormalizeInstances(guide.gameObject);
+            LowPolyButterflyBuilder.NormalizeModel(model.GetComponent<LowPolyButterflyWings>(), 3.6f);
+            model.transform.localRotation = Quaternion.Euler(35f, -20f, 0f);
             guide.transform.localPosition = new Vector3(0, 2.7f, 0);
-            Debug.Log("Ulysses presentation: source bounds " + bounds.size + ", display scale " + scale);
         }
 
         public static void OpenAndPlay()

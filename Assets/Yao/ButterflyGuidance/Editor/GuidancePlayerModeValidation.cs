@@ -38,13 +38,11 @@ namespace ButterflyEffect.Guidance.Editor
         {
             Require(!EditorApplication.isPlayingOrWillChangePlaymode, "Run player-mode validation outside Play mode.");
             Scene previousScene = SceneManager.GetActiveScene();
-            EventSystem previousEvents = EventSystem.current;
             Scene temporary = EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Additive);
             SceneManager.SetActiveScene(temporary);
             try
             {
                 var events = new GameObject("Keyboard validation EventSystem", typeof(EventSystem), typeof(XRUIInputModule));
-                EventSystem.current = events.GetComponent<EventSystem>();
                 ValidateNewCampusPlayer(temporary);
                 ValidateExistingCampsitePlayer(temporary);
                 ValidateActivePreviewPlayer(temporary);
@@ -54,7 +52,6 @@ namespace ButterflyEffect.Guidance.Editor
             {
                 EditorSceneManager.CloseScene(temporary, true);
                 if (previousScene.IsValid() && previousScene.isLoaded) SceneManager.SetActiveScene(previousScene);
-                if (previousEvents != null) EventSystem.current = previousEvents;
             }
         }
 

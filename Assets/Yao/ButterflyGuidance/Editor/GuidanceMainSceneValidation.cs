@@ -47,7 +47,7 @@ namespace ButterflyEffect.Guidance.Editor
             finally { EditorSceneManager.RestoreSceneManagerSetup(previous); }
 
             string summary = "Main scene integration validation passed: six team scenes, actual XR head bindings, "
-                + "world-space tracked UI, original 38-line library, native animated model, fixed route markers, "
+                + "world-space tracked UI, original 38-line library, low-poly animated butterfly, fixed route markers, "
                 + "minimal UI, physical ending state, and intermediate/final user-arrival locks.";
             Debug.Log(summary);
             string report = Environment.GetEnvironmentVariable("BUTTERFLY_INTEGRATION_REPORT");
@@ -158,6 +158,15 @@ namespace ButterflyEffect.Guidance.Editor
                 prefix + "Dialogue canvas is not configured for the XR camera.");
             Require(canvas.GetComponent<TrackedDeviceGraphicRaycaster>() != null,
                 prefix + "The dialogue canvas cannot receive XR UI rays.");
+            Require(panel.distance >= 1f && panel.distance <= 4f && panel.width >= 1f && panel.width <= 3.5f,
+                prefix + "Dialogue must remain at a readable world-space size and distance for VR.");
+            var canvasRect = (RectTransform)canvas.transform;
+            float physicalWidth = canvasRect.rect.width * Mathf.Abs(canvasRect.lossyScale.x);
+            Require(physicalWidth >= 1f && physicalWidth <= 3.5f,
+                prefix + "The saved canvas scale does not match a usable VR panel size.");
+            Require(view.uiMaterial != null && view.uiMaterial.shader != null
+                && view.uiMaterial.shader.name == "Butterfly Effect/Guidance UI Overlay",
+                prefix + "The stereo-compatible guidance UI material is missing.");
             var events = Active<EventSystem>(scene);
             Require(events.Length == 1, prefix + "Expected exactly one active EventSystem.");
             var modules = events[0].GetComponents<BaseInputModule>().Where(m => m.enabled).ToArray();
@@ -167,6 +176,13 @@ namespace ButterflyEffect.Guidance.Editor
             Require(!view.showDemoHeadings, prefix + "Demo heading is still enabled.");
             Transform card = canvas.transform.Find("Butterfly dialogue card");
             Require(card != null, prefix + "Dialogue card missing.");
+            var dialogueText = card.Find("Dialogue")?.GetComponent<Text>();
+            Require(dialogueText != null && dialogueText.font != null && dialogueText.fontSize >= 30
+                && (!dialogueText.resizeTextForBestFit || dialogueText.resizeTextMinSize >= 30),
+                prefix + "Dialogue text can shrink below the VR-readable size.");
+            foreach (var button in card.GetComponentsInChildren<Button>(true))
+                Require(button.targetGraphic != null && button.targetGraphic.raycastTarget,
+                    prefix + "A dialogue action cannot receive a controller ray: " + button.name);
             foreach (var text in canvas.GetComponentsInChildren<Text>(true))
                 Require(!text.gameObject.activeInHierarchy || text.transform.IsChildOf(card),
                     prefix + "Extra guidance text is active outside the dialogue card: " + text.name);
@@ -177,10 +193,7 @@ namespace ButterflyEffect.Guidance.Editor
             var visuals = guide.GetComponentsInChildren<GuidanceButterfly>(true);
             Require(visuals.Length == 1 && visuals[0].transform != guide.transform,
                 prefix + "The floating model must be a separate child of the moving guide.");
-            var animations = visuals[0].GetComponentsInChildren<Animation>(true);
-            Require(animations.Any(a => a.clip != null && a.clip.length > 0), prefix + "Native butterfly wing animation missing.");
-            Require(visuals[0].GetComponentsInChildren<SkinnedMeshRenderer>(true).Any(r => r.sharedMesh != null),
-                prefix + "Native Ulysses skinned mesh missing.");
+            ValidateButterflyVisual(visuals[0], prefix);
 
             Require(coordinator.stations != null && coordinator.stations.Length > 0, prefix + "No station bindings.");
             foreach (var station in coordinator.stations)
@@ -209,6 +222,58 @@ namespace ButterflyEffect.Guidance.Editor
                 Require(Active<SceneChanger>(scene).Length == 0,
                     prefix + "A legacy fixed-ending scene changer can race the physical-result return portal.");
                 Require(coordinator.routeEdges.Length > 0, prefix + "Campsite routes have no authored waypoint graph.");
+            }
+        }
+
+        public static void ValidateButterflyVisual(GuidanceButterfly visual, string prefix)
+        {
+            Require(visual != null, prefix + "Butterfly hover component missing.");
+            var wings = visual.GetComponentsInChildren<LowPolyButterflyWings>(true);
+            Require(wings.Length == 1 && wings[0].IsConfigured,
+                prefix + "Expected one low-poly butterfly with two separate wing pivots.");
+            var flap = wings[0];
+            Require(flap.leftWing.IsChildOf(flap.transform) && flap.rightWing.IsChildOf(flap.transform),
+                prefix + "Wing pivots must belong to the butterfly visual.");
+            Require(flap.flapFrequency > 0f && flap.flapAmplitude > 5f,
+                prefix + "Wing flapping is disabled.");
+            var filters = flap.GetComponentsInChildren<MeshFilter>(true);
+            Require(filters.Length >= 3 && filters.All(filter => filter.sharedMesh != null),
+                prefix + "Low-poly wings or body mesh missing.");
+            int triangles = filters.Sum(filter => filter.sharedMesh.triangles.Length / 3);
+            Require(triangles > 0 && triangles <= 1500,
+                prefix + "Butterfly geometry exceeds its VR mesh budget: " + triangles + " triangles.");
+            foreach (var filter in filters)
+            {
+                Require(AssetDatabase.Contains(filter.sharedMesh), prefix + "Butterfly mesh is not saved as an asset.");
+                var renderer = filter.GetComponent<MeshRenderer>();
+                Require(renderer != null && renderer.enabled && renderer.sharedMaterials.Length > 0
+                    && renderer.sharedMaterials.All(material => material != null && material.shader != null
+                        && material.shader.name != "Hidden/InternalErrorShader"),
+                    prefix + "Butterfly material or mesh renderer missing: " + filter.name);
+            }
+            Require(flap.leftWing.GetComponentInChildren<MeshRenderer>(true) != null
+                && flap.rightWing.GetComponentInChildren<MeshRenderer>(true) != null,
+                prefix + "Both wing pivots need visible geometry.");
+            Require(!visual.GetComponentsInChildren<SkinnedMeshRenderer>(true)
+                .Any(renderer => renderer.enabled && renderer.gameObject.activeInHierarchy),
+                prefix + "The realistic butterfly is still visible beside the low-poly model.");
+
+            Quaternion left = flap.leftWing.localRotation;
+            Quaternion right = flap.rightWing.localRotation;
+            try
+            {
+                flap.Pose(0f);
+                Quaternion startLeft = flap.leftWing.localRotation;
+                Quaternion startRight = flap.rightWing.localRotation;
+                flap.Pose(.25f / flap.flapFrequency);
+                Require(Quaternion.Angle(startLeft, flap.leftWing.localRotation) > 5f
+                    && Quaternion.Angle(startRight, flap.rightWing.localRotation) > 5f,
+                    prefix + "Flap animation does not rotate both wing pivots.");
+            }
+            finally
+            {
+                flap.leftWing.localRotation = left;
+                flap.rightWing.localRotation = right;
             }
         }
 

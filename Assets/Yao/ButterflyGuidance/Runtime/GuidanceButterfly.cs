@@ -4,7 +4,7 @@ using UnityEngine.Rendering;
 
 namespace ButterflyEffect.Guidance
 {
-    /// <summary>Gently floats the imported Ulysses model while its original fly animation plays.</summary>
+    /// <summary>Offsets the visual child without moving the guide's navigation root.</summary>
     public sealed class GuidanceButterfly : MonoBehaviour
     {
         public bool floatGently = true;
@@ -41,15 +41,16 @@ namespace ButterflyEffect.Guidance
                     var texture = original.mainTexture;
                     var material = new Material(shader) { name = original.name + " (scene material)" };
                     material.SetTexture("_BaseMap", texture);
-                    material.SetColor("_BaseColor", Color.white);
-                    material.SetFloat("_AlphaClip", 1);
+                    material.SetColor("_BaseColor", original.color);
+                    bool cutout = original.IsKeywordEnabled("_ALPHATEST_ON");
+                    material.SetFloat("_AlphaClip", cutout ? 1 : 0);
                     material.SetFloat("_Cutoff", .5f);
-                    material.SetFloat("_Cull", 0);
+                    material.SetFloat("_Cull", cutout ? 0 : 2);
                     material.SetFloat("_Surface", 0);
                     material.SetFloat("_Metallic", 0);
-                    material.SetFloat("_Smoothness", .35f);
-                    material.EnableKeyword("_ALPHATEST_ON");
-                    material.renderQueue = (int)RenderQueue.AlphaTest;
+                    material.SetFloat("_Smoothness", .08f);
+                    if (cutout) material.EnableKeyword("_ALPHATEST_ON");
+                    material.renderQueue = (int)(cutout ? RenderQueue.AlphaTest : RenderQueue.Geometry);
                     materials[i] = material;
                     adaptedMaterials.Add(material);
                 }

@@ -35,8 +35,8 @@ RectTransform:
   - {fileID: 7395001371141803255}
   m_Father: {fileID: 1958630770471253714}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0.045, y: 0.065}
-  m_AnchorMax: {x: 0.955, y: 0.385}
+  m_AnchorMin: {x: 0.16, y: 0.06}
+  m_AnchorMax: {x: 0.84, y: 0.31}
   m_AnchoredPosition: {x: 0, y: 0}
   m_SizeDelta: {x: 0, y: 0}
   m_Pivot: {x: 0.5, y: 0.5}
@@ -72,8 +72,8 @@ RectTransform:
   m_Children: []
   m_Father: {fileID: 7582643420923585586}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0.035, y: 0.43}
-  m_AnchorMax: {x: 0.965, y: 0.79}
+  m_AnchorMin: {x: 0.05, y: 0.49}
+  m_AnchorMax: {x: 0.95, y: 0.94}
   m_AnchoredPosition: {x: 0, y: 0}
   m_SizeDelta: {x: 0, y: 0}
   m_Pivot: {x: 0.5, y: 0.5}
@@ -98,7 +98,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Text
   m_Material: {fileID: 0}
-  m_Color: {r: 0.94, g: 0.95, b: 0.88, a: 1}
+  m_Color: {r: 0.2, g: 0.23, b: 0.17, a: 1}
   m_RaycastTarget: 0
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
@@ -107,17 +107,17 @@ MonoBehaviour:
       m_Calls: []
   m_FontData:
     m_Font: {fileID: 12800000, guid: 0f7367d3d12d844208a2fae3994cc62b, type: 3}
-    m_FontSize: 27
+    m_FontSize: 30
     m_FontStyle: 0
     m_BestFit: 1
-    m_MinSize: 20
-    m_MaxSize: 27
-    m_Alignment: 0
+    m_MinSize: 28
+    m_MaxSize: 30
+    m_Alignment: 3
     m_AlignByGeometry: 0
     m_RichText: 1
     m_HorizontalOverflow: 0
     m_VerticalOverflow: 0
-    m_LineSpacing: 1.08
+    m_LineSpacing: 1.12
   m_Text: 
 --- !u!1 &1177108711172157804
 GameObject:
@@ -149,8 +149,8 @@ RectTransform:
   m_Children: []
   m_Father: {fileID: 7582643420923585586}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0.035, y: 0.055}
-  m_AnchorMax: {x: 0.965, y: 0.43}
+  m_AnchorMin: {x: 0.05, y: 0.08}
+  m_AnchorMax: {x: 0.95, y: 0.44}
   m_AnchoredPosition: {x: 0, y: 0}
   m_SizeDelta: {x: 0, y: 0}
   m_Pivot: {x: 0.5, y: 0.5}
@@ -171,7 +171,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!224 &3230348584861033925
 RectTransform:
   m_ObjectHideFlags: 0
@@ -411,6 +411,9 @@ MonoBehaviour:
   headingFont: {fileID: 12800000, guid: 3f466ee0f8f89431a83418a80ebc06bd, type: 3}
   bodyFont: {fileID: 12800000, guid: 0f7367d3d12d844208a2fae3994cc62b, type: 3}
   showDemoHeadings: 0
+  uiMaterial: {fileID: 0}
+  choiceFontSize: 28
+  useNumberKeys: 1
   title: {fileID: 0}
   speaker: {fileID: 1316638510701926389}
   dialogue: {fileID: 1046803370085655385}
@@ -433,7 +436,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!224 &2225237187846859432
 RectTransform:
   m_ObjectHideFlags: 0
@@ -599,7 +602,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Image
   m_Material: {fileID: 0}
-  m_Color: {r: 0.027, g: 0.073, b: 0.092, a: 0.97}
+  m_Color: {r: 0.96, g: 0.93, b: 0.84, a: 0.98}
   m_RaycastTarget: 0
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
@@ -626,47 +629,47 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: 772941293618298929, guid: f4050da105b50425abcc113e373b0e59, type: 3}
       propertyPath: m_Name
-      value: UlyssesButterfly
+      value: Low-poly Butterfly
       objectReference: {fileID: 0}
     - target: {fileID: 8085087530465592836, guid: f4050da105b50425abcc113e373b0e59, type: 3}
       propertyPath: m_LocalScale.x
-      value: 1.2253888
+      value: 4.444444
       objectReference: {fileID: 0}
     - target: {fileID: 8085087530465592836, guid: f4050da105b50425abcc113e373b0e59, type: 3}
       propertyPath: m_LocalScale.y
-      value: 1.2253888
+      value: 4.444444
       objectReference: {fileID: 0}
     - target: {fileID: 8085087530465592836, guid: f4050da105b50425abcc113e373b0e59, type: 3}
       propertyPath: m_LocalScale.z
-      value: 1.2253888
+      value: 4.444444
       objectReference: {fileID: 0}
     - target: {fileID: 8085087530465592836, guid: f4050da105b50425abcc113e373b0e59, type: 3}
       propertyPath: m_LocalPosition.x
-      value: 0.12534127
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 8085087530465592836, guid: f4050da105b50425abcc113e373b0e59, type: 3}
       propertyPath: m_LocalPosition.y
-      value: 0.07361816
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 8085087530465592836, guid: f4050da105b50425abcc113e373b0e59, type: 3}
       propertyPath: m_LocalPosition.z
-      value: 0.29406506
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 8085087530465592836, guid: f4050da105b50425abcc113e373b0e59, type: 3}
       propertyPath: m_LocalRotation.w
-      value: 0.20091508
+      value: 0.9392279
       objectReference: {fileID: 0}
     - target: {fileID: 8085087530465592836, guid: f4050da105b50425abcc113e373b0e59, type: 3}
       propertyPath: m_LocalRotation.x
-      value: 0.07613427
+      value: 0.29613742
       objectReference: {fileID: 0}
     - target: {fileID: 8085087530465592836, guid: f4050da105b50425abcc113e373b0e59, type: 3}
       propertyPath: m_LocalRotation.y
-      value: -0.543726
+      value: -0.16561122
       objectReference: {fileID: 0}
     - target: {fileID: 8085087530465592836, guid: f4050da105b50425abcc113e373b0e59, type: 3}
       propertyPath: m_LocalRotation.z
-      value: 0.81129444
+      value: 0.052217018
       objectReference: {fileID: 0}
     - target: {fileID: 8085087530465592836, guid: f4050da105b50425abcc113e373b0e59, type: 3}
       propertyPath: m_LocalEulerAnglesHint.x

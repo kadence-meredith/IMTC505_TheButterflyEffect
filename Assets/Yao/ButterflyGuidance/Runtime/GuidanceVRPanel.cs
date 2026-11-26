@@ -38,19 +38,12 @@ namespace ButterflyEffect.Guidance
             if (view == null) return;
 
             view.showDemoHeadings = false;
-            view.choiceFontSize = 24;
+            view.choiceFontSize = 32;
             view.Build();
             DialogueCanvas = view.GetComponentInChildren<Canvas>(true);
             if (DialogueCanvas == null) return;
             foreach (var graphic in DialogueCanvas.GetComponentsInChildren<Graphic>(true))
                 if (view.uiMaterial != null) graphic.material = view.uiMaterial;
-            var dialogue = DialogueCanvas.transform.Find("Butterfly dialogue card/Dialogue")?.GetComponent<Text>();
-            if (dialogue != null)
-            {
-                dialogue.resizeTextMinSize = 28;
-                dialogue.resizeTextMaxSize = 36;
-                dialogue.fontSize = 36;
-            }
             if (playerCamera == null) playerCamera = Camera.main;
 
             DialogueCanvas.renderMode = RenderMode.WorldSpace;
@@ -83,6 +76,7 @@ namespace ButterflyEffect.Guidance
                 DialogueCanvas.gameObject.AddComponent<TrackedDeviceGraphicRaycaster>();
 
             EnsureXRInput();
+            view.ApplyNaturalStyle();
             if (view.IsExplorationMode) view.SetExplorationMode(true);
             SnapToPlayer();
         }

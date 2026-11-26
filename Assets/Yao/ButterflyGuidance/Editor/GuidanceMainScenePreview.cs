@@ -353,7 +353,7 @@ namespace ButterflyEffect.Guidance.Editor
             if (panel != null) panel.SnapToPlayer();
             Canvas.ForceUpdateCanvases();
             var camera = bridge.coordinator.guide.user.GetComponent<Camera>();
-            var model = bridge.coordinator.guide.GetComponentInChildren<SkinnedMeshRenderer>();
+            var model = bridge.coordinator.guide.GetComponentInChildren<MeshRenderer>();
             if (model != null)
                 File.AppendAllText(Path.Combine(SessionState.GetString(Prefix + "directory", ""), "visual-positions.txt"),
                     file + " rig=" + Rig(bridge).position + " head=" + camera.transform.position

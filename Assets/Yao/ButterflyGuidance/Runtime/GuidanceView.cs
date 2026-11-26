@@ -18,7 +18,7 @@ namespace ButterflyEffect.Guidance
         public Font bodyFont;
         public bool showDemoHeadings = false;
         public Material uiMaterial;
-        public int choiceFontSize = 16;
+        public int choiceFontSize = 28;
         public bool useNumberKeys = true;
         public bool InteractionLocked { get; private set; }
         public bool IsExplorationMode { get; private set; }
@@ -31,9 +31,10 @@ namespace ButterflyEffect.Guidance
         [SerializeField] private Canvas canvas;
         private readonly List<Button> activeButtons = new List<Button>();
         private readonly List<int> choiceIndices = new List<int>();
-        private readonly Color ink = new Color(.032f, .082f, .105f, 1);
-        private readonly Color cream = new Color(.94f, .95f, .88f, 1);
-        private readonly Color cyan = new Color(.38f, .88f, .86f, 1);
+        private readonly Color ink = new Color(.20f, .23f, .17f, 1);
+        private readonly Color paper = new Color(.96f, .93f, .84f, .98f);
+        private readonly Color sage = new Color(.74f, .79f, .62f, 1);
+        private readonly Color sand = new Color(.88f, .84f, .72f, 1);
         private GuidanceLine displayed;
         private int optionCount;
         private float promptRemaining;
@@ -72,7 +73,7 @@ namespace ButterflyEffect.Guidance
 
         private void Awake()
         {
-            if (canvas == null) Build();
+            Build();
             if (director == null) director = GetComponent<GuidanceDirector>();
             if (EventSystem.current == null)
             {
@@ -162,8 +163,10 @@ namespace ButterflyEffect.Guidance
         private void RenderChoices(GuidanceLine line, bool opening)
         {
             bool hasChoices = line.choices != null && line.choices.Length > 0;
-            int columns = optionCount <= 2 ? Math.Max(1, optionCount) : Math.Min(4, optionCount);
+            int columns = ChoiceColumns();
             int rows = Mathf.CeilToInt(optionCount / (float)columns);
+            if (IsExplorationMode) ApplyExplorationLayout(false);
+            else ApplyDialogueLayout();
             for (int i = 0; i < optionCount; i++)
             {
                 int index = i;
@@ -176,13 +179,13 @@ namespace ButterflyEffect.Guidance
                 var button = MakeButton(choices, "Choice " + (i + 1), label,
                     new Vector2(x0, y0), new Vector2(x1, y1), () => Select(index), i == 0);
                 var rect = (RectTransform)button.transform;
-                float inset = IsExplorationMode ? 4 : rows > 1 ? 5 : 16;
+                float inset = rows > 1 ? 5 : 4;
                 rect.offsetMin = new Vector2(i % columns == 0 ? 0 : 6, inset);
                 rect.offsetMax = new Vector2(i % columns == columns - 1 ? 0 : -6, -inset);
                 if (optionCount == 1 && !IsExplorationMode)
                 {
-                    rect.anchorMin = new Vector2(.72f, 0);
-                    rect.anchorMax = Vector2.one;
+                    rect.anchorMin = new Vector2(.32f, 0);
+                    rect.anchorMax = new Vector2(.68f, 1);
                 }
                 activeButtons.Add(button);
             }
@@ -388,21 +391,45 @@ namespace ButterflyEffect.Guidance
             savedLayout = true;
         }
 
+        private int ChoiceColumns()
+        {
+            return Math.Max(1, Math.Min(3, optionCount));
+        }
+
+        private void ApplyDialogueLayout()
+        {
+            if (canvas == null || dialogue == null || choices == null) return;
+            if (card == null) card = dialogue.transform.parent as RectTransform;
+            if (card == null) return;
+            bool world = canvas.renderMode == RenderMode.WorldSpace;
+            bool twoRows = optionCount > ChoiceColumns();
+            SetRect(card, world ? new Vector2(.08f, 0) : new Vector2(.16f, .06f),
+                world ? Vector2.one - new Vector2(.08f, 0) : new Vector2(.84f, twoRows ? .39f : .31f));
+            SetRect(dialogue.rectTransform, new Vector2(.05f, twoRows ? .80f : .49f), new Vector2(.95f, .94f));
+            SetRect(choices, new Vector2(.05f, .08f), new Vector2(.95f, twoRows ? .76f : .44f));
+            dialogue.fontSize = world ? 36 : 30;
+            dialogue.resizeTextMinSize = world ? 32 : 28;
+            dialogue.resizeTextMaxSize = world ? 36 : 30;
+            dialogue.alignment = TextAnchor.MiddleLeft;
+        }
+
         private void ApplyExplorationLayout(bool prompt)
         {
             SaveLayout();
             if (card == null || dialogue == null || choices == null) return;
             bool world = canvas != null && canvas.renderMode == RenderMode.WorldSpace;
             bool actionsOnly = !prompt && string.IsNullOrEmpty(dialogue.text) && optionCount > 0;
+            bool twoRows = optionCount > ChoiceColumns();
             SetRect(card,
-                world ? new Vector2(prompt ? .25f : .18f, prompt ? .34f : .02f) : new Vector2(prompt ? .3f : .21f, .06f),
-                world ? new Vector2(prompt ? .75f : .82f, prompt ? .61f : actionsOnly ? .38f : .7f)
-                    : new Vector2(prompt ? .7f : .79f, prompt ? .13f : actionsOnly ? .16f : .24f));
-            SetRect(dialogue.rectTransform, new Vector2(.05f, prompt ? .08f : .55f), new Vector2(.95f, .94f));
-            SetRect(choices, new Vector2(.05f, .08f), new Vector2(.95f, actionsOnly ? .92f : .53f));
-            dialogue.fontSize = 30;
-            dialogue.resizeTextMinSize = 22;
-            dialogue.resizeTextMaxSize = 30;
+                world ? new Vector2(prompt ? .26f : .14f, prompt ? .32f : .06f)
+                    : new Vector2(prompt ? .32f : .20f, .065f),
+                world ? new Vector2(prompt ? .74f : .86f, prompt ? .68f : actionsOnly ? (twoRows ? .82f : .52f) : 1f)
+                    : new Vector2(prompt ? .68f : .80f, prompt ? .15f : actionsOnly ? (twoRows ? .29f : .19f) : (twoRows ? .38f : .29f)));
+            SetRect(dialogue.rectTransform, new Vector2(.055f, prompt ? .10f : twoRows ? .66f : .55f), new Vector2(.945f, .92f));
+            SetRect(choices, new Vector2(.055f, .10f), new Vector2(.945f, actionsOnly ? .90f : twoRows ? .63f : .49f));
+            dialogue.fontSize = world ? 36 : 30;
+            dialogue.resizeTextMinSize = world ? 32 : 28;
+            dialogue.resizeTextMaxSize = world ? 36 : 30;
             dialogue.alignment = prompt ? TextAnchor.MiddleCenter : TextAnchor.MiddleLeft;
             if (speaker != null) speaker.gameObject.SetActive(false);
             if (title != null) title.gameObject.SetActive(false);
@@ -436,7 +463,11 @@ namespace ButterflyEffect.Guidance
         /// <summary>Used by the editor builder to save an editable Canvas into the prefab.</summary>
         public void Build()
         {
-            if (canvas != null) return;
+            if (canvas != null)
+            {
+                ApplyNaturalStyle();
+                return;
+            }
             if (bodyFont == null) bodyFont = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
             if (headingFont == null) headingFont = bodyFont;
             var canvasObject = new GameObject("Dialogue Canvas", typeof(RectTransform), typeof(Canvas), typeof(CanvasScaler), typeof(GraphicRaycaster));
@@ -450,18 +481,84 @@ namespace ButterflyEffect.Guidance
             scaler.matchWidthOrHeight = .5f;
             var root = (RectTransform)canvasObject.transform;
             if (showDemoHeadings)
-                title = MakeText(root, "Location title", "Campus", 40, cream, new Vector2(.05f, .87f), new Vector2(.45f, .95f), headingFont);
-            var card = MakeRect(root, "Butterfly dialogue card", new Vector2(.045f, .065f), new Vector2(.955f, .385f));
-            MakeImage(card, "Card surface", new Color(.027f, .073f, .092f, .97f), Vector2.zero, Vector2.one);
-            MakeImage(card, "Cyan accent", cyan, new Vector2(0, .99f), Vector2.one);
-            speaker = MakeText(card, "Speaker", "Butterfly", 14, cyan, new Vector2(.035f, .8f), new Vector2(.965f, .94f));
-            dialogue = MakeText(card, "Dialogue", "", 27, cream, new Vector2(.035f, .43f), new Vector2(.965f, .79f));
+                title = MakeText(root, "Location title", "Campus", 40, ink, new Vector2(.05f, .87f), new Vector2(.45f, .95f), headingFont);
+            var card = MakeRect(root, "Butterfly dialogue card", new Vector2(.16f, .06f), new Vector2(.84f, .31f));
+            MakeImage(card, "Card surface", paper, Vector2.zero, Vector2.one);
+            speaker = MakeText(card, "Speaker", "Butterfly", 14, ink, new Vector2(.035f, .8f), new Vector2(.965f, .94f));
+            dialogue = MakeText(card, "Dialogue", "", 30, ink, new Vector2(.05f, .49f), new Vector2(.95f, .92f));
             dialogue.alignment = TextAnchor.UpperLeft;
             dialogue.lineSpacing = 1.08f;
             dialogue.resizeTextForBestFit = true;
-            dialogue.resizeTextMinSize = 20;
-            dialogue.resizeTextMaxSize = 27;
-            choices = MakeRect(card, "Choices", new Vector2(.035f, .055f), new Vector2(.965f, .43f));
+            dialogue.resizeTextMinSize = 28;
+            dialogue.resizeTextMaxSize = 30;
+            choices = MakeRect(card, "Choices", new Vector2(.05f, .09f), new Vector2(.95f, .44f));
+            ApplyNaturalStyle();
+        }
+
+        /// <summary>Refreshes saved canvases as well as canvases created at runtime.</summary>
+        public void ApplyNaturalStyle()
+        {
+            if (canvas == null) return;
+            if (bodyFont == null) bodyFont = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
+            if (dialogue == null) dialogue = canvas.transform.Find("Butterfly dialogue card/Dialogue")?.GetComponent<Text>();
+            if (choices == null) choices = canvas.transform.Find("Butterfly dialogue card/Choices") as RectTransform;
+            if (dialogue == null || choices == null) return;
+            card = dialogue.transform.parent as RectTransform;
+            if (card == null) return;
+            var surface = card.Find("Card surface")?.GetComponent<Image>();
+            if (surface != null)
+            {
+                surface.color = paper;
+                surface.raycastTarget = false;
+            }
+            var accent = card.Find("Cyan accent");
+            if (accent != null) accent.gameObject.SetActive(false);
+            if (speaker != null) speaker.gameObject.SetActive(false);
+            if (title != null)
+            {
+                title.color = ink;
+                title.gameObject.SetActive(showDemoHeadings && !IsExplorationMode);
+            }
+            dialogue.color = ink;
+            dialogue.font = bodyFont;
+            dialogue.lineSpacing = 1.12f;
+            dialogue.resizeTextForBestFit = true;
+            bool world = canvas.renderMode == RenderMode.WorldSpace;
+            choiceFontSize = Math.Max(choiceFontSize, world ? 32 : 28);
+            int index = 0;
+            foreach (var button in choices.GetComponentsInChildren<Button>(true))
+                StyleButton(button, index++ == 0);
+            if (IsExplorationMode) ApplyExplorationLayout(TransientPromptVisible);
+            else ApplyDialogueLayout();
+        }
+
+        private void StyleButton(Button button, bool primary)
+        {
+            var image = button.GetComponent<Image>();
+            if (image != null) image.color = primary ? sage : sand;
+            var colors = button.colors;
+            colors.normalColor = Color.white;
+            colors.highlightedColor = new Color(.96f, 1f, .90f);
+            colors.pressedColor = new Color(.79f, .84f, .71f);
+            colors.selectedColor = Color.white;
+            colors.fadeDuration = .12f;
+            button.colors = colors;
+            var text = button.GetComponentInChildren<Text>(true);
+            if (text != null)
+            {
+                text.font = bodyFont;
+                text.color = ink;
+                text.fontSize = choiceFontSize;
+                text.resizeTextForBestFit = true;
+                text.resizeTextMinSize = canvas != null && canvas.renderMode == RenderMode.WorldSpace ? 32 : 28;
+                text.resizeTextMaxSize = choiceFontSize;
+            }
+            var outline = button.GetComponent<Outline>();
+            if (outline != null)
+            {
+                outline.effectColor = new Color(.30f, .34f, .23f, .16f);
+                outline.effectDistance = new Vector2(1, -1);
+            }
         }
 
         private RectTransform MakeRect(Transform parent, string name, Vector2 min, Vector2 max)
@@ -506,23 +603,19 @@ namespace ButterflyEffect.Guidance
             var rect = MakeRect(parent, name, min, max);
             var image = rect.gameObject.AddComponent<Image>();
             if (uiMaterial != null) image.material = uiMaterial;
-            image.color = primary ? cyan : new Color(.09f, .19f, .22f, 1);
+            image.color = primary ? sage : sand;
             var button = rect.gameObject.AddComponent<Button>();
             button.targetGraphic = image;
-            var colors = button.colors;
-            colors.highlightedColor = primary ? new Color(.8f, 1, .93f) : new Color(.67f, .92f, .9f);
-            colors.pressedColor = new Color(.57f, .76f, .74f);
-            colors.selectedColor = Color.white;
-            button.colors = colors;
             button.onClick.AddListener(() => action());
-            var text = MakeText(rect, "Label", label, choiceFontSize, primary ? ink : cream, new Vector2(.035f, 0), new Vector2(.965f, 1));
+            var text = MakeText(rect, "Label", label, choiceFontSize, ink, new Vector2(.035f, 0), new Vector2(.965f, 1));
             text.alignment = TextAnchor.MiddleCenter;
             text.resizeTextForBestFit = true;
-            text.resizeTextMinSize = Math.Min(16, choiceFontSize);
+            text.resizeTextMinSize = canvas != null && canvas.renderMode == RenderMode.WorldSpace ? 32 : 28;
             text.resizeTextMaxSize = choiceFontSize;
             var outline = rect.gameObject.AddComponent<Outline>();
-            outline.effectColor = new Color(.35f, .6f, .6f, .23f);
+            outline.effectColor = new Color(.30f, .34f, .23f, .16f);
             outline.effectDistance = new Vector2(1, -1);
+            StyleButton(button, primary);
             return button;
         }
     }

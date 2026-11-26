@@ -92,7 +92,11 @@ namespace ButterflyEffect.Guidance.Editor
         {
             const string modelPath = Root + "/Art/Ulysses/UlyssesButterfly.prefab";
             var modelPrefab = AssetDatabase.LoadAssetAtPath<GameObject>(modelPath);
-            if (modelPrefab == null) throw new InvalidOperationException("Ulysses model is missing: " + modelPath);
+            if (modelPrefab == null || modelPrefab.GetComponent<LowPolyButterflyWings>() == null)
+            {
+                LowPolyButterflyBuilder.Build();
+                modelPrefab = AssetDatabase.LoadAssetAtPath<GameObject>(modelPath);
+            }
             var root = new GameObject("Butterfly Point Guide");
             var guide = root.AddComponent<ButterflyPointGuide>();
             guide.autoAdvance = true;
@@ -101,14 +105,7 @@ namespace ButterflyEffect.Guidance.Editor
             hover.transform.SetParent(root.transform, false);
             var model = (GameObject)PrefabUtility.InstantiatePrefab(modelPrefab);
             model.transform.SetParent(hover.transform, false);
-            model.transform.localRotation = Quaternion.Euler(-15, 180, 0);
-            var renderers = model.GetComponentsInChildren<Renderer>();
-            var bounds = renderers[0].bounds;
-            foreach (var renderer in renderers.Skip(1)) bounds.Encapsulate(renderer.bounds);
-            model.transform.localScale *= .8f / Mathf.Max(bounds.size.x, bounds.size.y, bounds.size.z);
-            bounds = renderers[0].bounds;
-            foreach (var renderer in renderers.Skip(1)) bounds.Encapsulate(renderer.bounds);
-            model.transform.position -= bounds.center;
+            LowPolyButterflyBuilder.NormalizeInstances(root);
             PrefabUtility.SaveAsPrefabAsset(root, GuidePrefabPath);
             UnityEngine.Object.DestroyImmediate(root);
             return ((GameObject)PrefabUtility.InstantiatePrefab(AssetDatabase.LoadAssetAtPath<GameObject>(GuidePrefabPath))).GetComponent<ButterflyPointGuide>();

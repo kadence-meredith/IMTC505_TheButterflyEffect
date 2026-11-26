@@ -25,7 +25,6 @@ namespace ButterflyEffect.Guidance.Editor
             var report = new Report { utc = DateTime.UtcNow.ToString("O") };
             Scene previousScene = default;
             Scene temporary = default;
-            EventSystem previousEvents = EventSystem.current;
             PrototypeSession previousSession = PrototypeSession.Instance;
             try
             {
@@ -60,7 +59,6 @@ namespace ButterflyEffect.Guidance.Editor
             {
                 if (temporary.IsValid() && temporary.isLoaded) EditorSceneManager.CloseScene(temporary, true);
                 if (previousScene.IsValid() && previousScene.isLoaded) SceneManager.SetActiveScene(previousScene);
-                if (previousEvents != null) EventSystem.current = previousEvents;
                 typeof(PrototypeSession).GetProperty("Instance", BindingFlags.Static | BindingFlags.Public)
                     .SetValue(null, previousSession);
                 string path = Environment.GetEnvironmentVariable("BUTTERFLY_SEQUENCE_REPORT");
@@ -440,7 +438,6 @@ namespace ButterflyEffect.Guidance.Editor
                 InstanceProperty.SetValue(null, Session);
                 var events = Child("EventSystem").AddComponent<EventSystem>();
                 events.gameObject.AddComponent<XRUIInputModule>();
-                EventSystem.current = events;
                 library = GuidanceLibrary.CreateDefault();
                 Director = Root.AddComponent<GuidanceDirector>();
                 Director.library = library;
