@@ -4,7 +4,7 @@ using UnityEngine.Rendering;
 
 namespace ButterflyEffect.Prototype
 {
-    [RequireComponent(typeof(TerrainCollider)), DisallowMultipleComponent]
+    [DisallowMultipleComponent]
     public sealed class WetGrass : MonoBehaviour, IPrototypeResettable
     {
         [SerializeField] private Shader wetGrassShader;
@@ -23,6 +23,7 @@ namespace ButterflyEffect.Prototype
         private readonly Vector2[] uv = new Vector2[(Segments + 1) * (Segments + 1)];
         private MaterialPropertyBlock properties;
         private TerrainData terrain;
+        private WetMatGeometry mat;
         private Material material;
 
         private sealed class Patch
@@ -36,19 +37,40 @@ namespace ButterflyEffect.Prototype
         }
 
         public static void WaterGround(TerrainCollider ground, Vector3 hitPoint, float amount)
+            => WaterSurface(ground, hitPoint, amount);
+
+        public static void WaterGround(RaycastHit hit, float amount)
         {
-            if (!ground.TryGetComponent(out WetGrass grass))
+            if (hit.collider is TerrainCollider ||
+                (hit.collider is MeshCollider && hit.normal.y >= WetMatGeometry.MinimumUp))
+                WaterSurface(hit.collider, hit.point, amount);
+        }
+
+        private static void WaterSurface(Collider ground, Vector3 hitPoint, float amount)
+        {
+            if (!ground.TryGetComponent(out WetGrass wet))
             {
-                // A campsite already open during a script update can still have its original hierarchy.
-                if (!ground.TryGetComponent<CampsiteGround>(out _)) return;
-                grass = ground.gameObject.AddComponent<WetGrass>();
+                if (ground is MeshCollider mesh)
+                {
+                    // The mat's marker is on its prefab root. Props under the grass terrain are separate surfaces.
+                    CampsiteGround floor = mesh.GetComponentInParent<CampsiteGround>();
+                    if (floor == null || floor.TryGetComponent<TerrainCollider>(out _) || mesh.attachedRigidbody != null ||
+                        mesh.sharedMesh == null || !mesh.sharedMesh.isReadable) return;
+                }
+                else if (!ground.TryGetComponent<CampsiteGround>(out _)) return;
+                wet = ground.gameObject.AddComponent<WetGrass>();
             }
-            if (grass.isActiveAndEnabled) grass.AddWater(hitPoint, amount);
+            if (wet.isActiveAndEnabled) wet.AddWater(hitPoint, amount);
         }
 
         private void InitializeSurface()
         {
-            if (terrain == null) terrain = GetComponent<TerrainCollider>().terrainData;
+            if (terrain == null && mat == null)
+            {
+                if (TryGetComponent(out TerrainCollider grass)) terrain = grass.terrainData;
+                else if (TryGetComponent(out MeshCollider mesh) && mesh.sharedMesh != null && mesh.sharedMesh.isReadable)
+                    mat = new WetMatGeometry(mesh);
+            }
             if (wetGrassShader == null) wetGrassShader = Shader.Find("Butterfly Effect/Wet Grass");
             if (material == null && wetGrassShader != null) material = new Material(wetGrassShader);
             if (properties == null) properties = new MaterialPropertyBlock();
@@ -58,11 +80,15 @@ namespace ButterflyEffect.Prototype
         {
             if (amount <= 0f) return;
             InitializeSurface();
-            if (terrain == null || material == null) return;
-            Vector3 local = transform.InverseTransformPoint(hitPoint);
-            Vector2 center = new Vector2(local.x, local.z);
-            // Tree colliders can be part of the terrain as well.
-            if (Mathf.Abs(local.y - GroundHeight(center)) > 0.08f) return;
+            if ((terrain == null && mat == null) || material == null) return;
+            Vector2 center = new Vector2(hitPoint.x, hitPoint.z);
+            if (terrain != null)
+            {
+                Vector3 local = transform.InverseTransformPoint(hitPoint);
+                center = new Vector2(local.x, local.z);
+                // Tree colliders can be part of the terrain as well.
+                if (Mathf.Abs(local.y - GroundHeight(center)) > 0.08f) return;
+            }
 
             Patch nearest = null;
             float nearestSquared = MergeDistance * MergeDistance;
@@ -92,9 +118,9 @@ namespace ButterflyEffect.Prototype
             }
             if (slot == null || (slot.water > 0f && patches.Count < MaxPatches))
             {
-                var obj = new GameObject("Wet grass patch");
+                var obj = new GameObject(mat == null ? "Wet grass patch" : "Wet mat patch");
                 obj.transform.SetParent(transform, false);
-                slot = new Patch { mesh = new Mesh { name = "Wet grass surface" }, renderer = obj.AddComponent<MeshRenderer>() };
+                slot = new Patch { mesh = new Mesh { name = "Wet surface" }, renderer = obj.AddComponent<MeshRenderer>() };
                 obj.AddComponent<MeshFilter>().sharedMesh = slot.mesh;
                 slot.renderer.sharedMaterial = material;
                 slot.renderer.shadowCastingMode = ShadowCastingMode.Off;
@@ -103,7 +129,8 @@ namespace ButterflyEffect.Prototype
             }
             slot.center = center;
             slot.water = 0f;
-            FitToTerrain(slot);
+            if (mat != null) mat.Fit(slot.mesh, center, Reach);
+            else FitToTerrain(slot);
             slot.renderer.gameObject.SetActive(true);
             return slot;
         }

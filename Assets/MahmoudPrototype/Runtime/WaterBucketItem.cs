@@ -70,8 +70,7 @@ namespace ButterflyEffect.Prototype
             { Session.state.poursStarted++; Session.state.totalActions++; Session.Changed(); }
             wasPouring = pouring;
             if (!pouring) return;
-            Collider surface = TracePour(out int count);
-            Vector3 end = pourPath[count - 1];
+            RaycastHit contact = TracePour(out int count);
             if (stream != null)
             {
                 stream.positionCount = count;
@@ -79,15 +78,14 @@ namespace ButterflyEffect.Prototype
             }
             float amount = Mathf.Min(waterLeft, pourRate * Time.deltaTime);
             waterLeft = Mathf.Max(0f, waterLeft - amount);
-            if (surface == null) return;
-            if (surface is TerrainCollider ground)
-                WetGrass.WaterGround(ground, end, amount);
+            if (contact.collider == null) return;
+            WetGrass.WaterGround(contact, amount);
             // Query the registry each pour so a newly created or enabled fire also receives water.
             foreach (FireTarget target in FireTarget.ActiveTargets)
-                if (target != null && target.ReceiveWater(end, amount)) break;
+                if (target != null && target.ReceiveWater(contact.point, amount)) break;
         }
 
-        private Collider TracePour(out int count)
+        private RaycastHit TracePour(out int count)
         {
             Vector3 origin = spout.position;
             pourPath[0] = origin;
@@ -110,21 +108,20 @@ namespace ButterflyEffect.Prototype
             {
                 float t = (float)i / steps;
                 Vector3 next = origin + sideways * t + Vector3.down * (drop * t * t);
-                if (AppendSegment(next, ref count, out Collider hit)) return hit;
+                if (AppendSegment(next, ref count, out RaycastHit hit)) return hit;
             }
             // A low ledge can end before the intended landing spot. Continue down to the ground.
-            if (drop < MaxDrop && AppendSegment(origin + sideways + Vector3.down * MaxDrop, ref count, out Collider below))
+            if (drop < MaxDrop && AppendSegment(origin + sideways + Vector3.down * MaxDrop, ref count, out RaycastHit below))
                 return below;
-            return null;
+            return default;
         }
 
-        private bool AppendSegment(Vector3 next, ref int count, out Collider collider)
+        private bool AppendSegment(Vector3 next, ref int count, out RaycastHit contact)
         {
             Vector3 start = pourPath[count - 1];
             Vector3 segment = next - start;
-            bool hit = FirstSurface(start, segment.normalized, segment.magnitude, out RaycastHit contact);
+            bool hit = FirstSurface(start, segment.normalized, segment.magnitude, out contact);
             pourPath[count++] = hit ? contact.point : next;
-            collider = hit ? contact.collider : null;
             return hit;
         }
 

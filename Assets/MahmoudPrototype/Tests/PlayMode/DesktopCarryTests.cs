@@ -11,6 +11,7 @@ namespace ButterflyEffect.Prototype.Tests
     {
         private GameObject playerObject, itemObject, station, managerObject;
         private TerrainData testTerrain;
+        private Mesh testMat;
         private DesktopPlayer player;
         private Camera camera;
 
@@ -156,6 +157,61 @@ namespace ButterflyEffect.Prototype.Tests
         }
 
         [UnityTest]
+        public IEnumerator PourAtMatEdgeWetsOnlyTheTopOfTheMarkedMesh()
+        {
+            var root = new GameObject("Camp mat");
+            root.transform.SetParent(station.transform, false);
+            root.transform.position = new Vector3(-0.8f, 0f, 1.4f);
+            root.transform.rotation = Quaternion.Euler(0f, 20f, 0f);
+            root.transform.localScale = new Vector3(2f, 0.5f, 2.5f);
+            var mat = new GameObject("Mat mesh");
+            mat.transform.SetParent(root.transform, false);
+            testMat = new Mesh
+            {
+                vertices = new[] {
+                    new Vector3(-0.5f, 0f, -0.5f), new Vector3(-0.5f, 0f, 0.5f),
+                    new Vector3(0.5f, 0f, 0.5f), new Vector3(0.5f, 0f, -0.5f),
+                    new Vector3(0.5f, -0.2f, 0.5f), new Vector3(0.5f, -0.2f, -0.5f)
+                },
+                triangles = new[] { 0, 1, 2, 0, 2, 3, 3, 2, 4, 3, 4, 5 }
+            };
+            testMat.RecalculateNormals();
+            mat.AddComponent<MeshFilter>().sharedMesh = testMat;
+            mat.AddComponent<MeshRenderer>();
+            var collider = mat.AddComponent<MeshCollider>();
+            collider.sharedMesh = testMat;
+            Physics.SyncTransforms();
+
+            Vector3 aim = mat.transform.TransformPoint(new Vector3(0.47f, 0f, 0f));
+            camera.transform.LookAt(aim);
+            WaterBucketItem bucket = MakeItem<WaterBucketItem>();
+            bucket.spout = bucket.transform;
+            player.Grab(bucket);
+            bucket.DesktopTilt(true);
+            yield return new WaitForSeconds(0.2f);
+            Assert.That(bucket.waterLeft, Is.LessThan(bucket.capacity));
+            Assert.That(mat.GetComponent<WetGrass>(), Is.Null);
+
+            root.AddComponent<CampsiteGround>();
+            yield return new WaitForSeconds(0.2f);
+            Assert.That(mat.GetComponents<WetGrass>(), Has.Length.EqualTo(1));
+            Assert.That(root.GetComponent<WetGrass>(), Is.Null);
+            Assert.That(mat.transform.childCount, Is.EqualTo(1));
+            MeshFilter patch = mat.transform.GetChild(0).GetComponent<MeshFilter>();
+            Assert.That(patch.sharedMesh.vertexCount, Is.GreaterThanOrEqualTo(3));
+            float outermost = float.NegativeInfinity;
+            foreach (Vector3 vertex in patch.sharedMesh.vertices)
+            {
+                Vector3 local = mat.transform.InverseTransformPoint(patch.transform.TransformPoint(vertex));
+                Assert.That(local.x, Is.InRange(-0.501f, 0.501f));
+                Assert.That(local.z, Is.InRange(-0.501f, 0.501f));
+                Assert.That(local.y, Is.InRange(-0.001f, 0.04f));
+                outermost = Mathf.Max(outermost, local.x);
+            }
+            Assert.That(outermost, Is.EqualTo(0.5f).Within(0.005f));
+        }
+
+        [UnityTest]
         public IEnumerator DesktopPourFollowsTheReticleAndStopsAtAnObstacleInItsPath()
         {
             GameObject ground = MakeFlatTerrain();
@@ -231,6 +287,7 @@ namespace ButterflyEffect.Prototype.Tests
             if (player != null) player.DropHeld(false);
             Object.Destroy(playerObject); Object.Destroy(itemObject); Object.Destroy(station); Object.Destroy(managerObject);
             if (testTerrain != null) Object.Destroy(testTerrain);
+            if (testMat != null) Object.Destroy(testMat);
             yield return null;
         }
     }
