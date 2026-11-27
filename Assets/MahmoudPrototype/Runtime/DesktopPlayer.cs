@@ -170,6 +170,7 @@ namespace ButterflyEffect.Prototype
         {
             if (Held == null || view == null) return;
             if (!Held.gameObject.activeInHierarchy) { DropHeld(false); return; }
+            if (Held is WaterBucketItem bucket) bucket.DesktopView = view;
             SetItemPose(Held, GetCarryPose(Held));
         }
 

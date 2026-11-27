@@ -1,6 +1,10 @@
 Shader "Butterfly Effect/Wet Grass"
 {
-    Properties { _WetAmount ("Soaked fraction", Range(0, 1)) = 1 }
+    Properties
+    {
+        _WetAmount ("Soaked fraction", Range(0, 1)) = 1
+        [HideInInspector] _Impact ("Last water contact", Vector) = (0, 0, -1, 0)
+    }
     SubShader
     {
         Tags { "RenderPipeline"="UniversalPipeline" "Queue"="Transparent-10" "RenderType"="Transparent" }
@@ -21,6 +25,7 @@ Shader "Butterfly Effect/Wet Grass"
 
             CBUFFER_START(UnityPerMaterial)
                 float _WetAmount;
+                float4 _Impact;
             CBUFFER_END
 
             struct Attributes
@@ -68,7 +73,15 @@ Shader "Butterfly Effect/Wet Grass"
                 half mottling = 0.5h + 0.5h * sin(13.7 * p.y + 2.1 * sin(9.2 * p.x));
                 half sheen = saturate(grazing * grazing + 0.28h * mottling);
                 half3 damp = half3(0.25h, 0.38h, 0.64h) + sheen * half3(0.16h, 0.25h, 0.52h);
-                return half4(damp * opacity, opacity);
+                // A little reflected light travels out from the falling water and fades after release.
+                float contact = length(p - _Impact.xy);
+                float phase = frac(_Time.y * 2.2);
+                float ringDistance = abs(contact - lerp(0.025, 0.19, phase));
+                half ripple = (1.0h - smoothstep(0.005, 0.025, ringDistance)) * (1.0h - phase);
+                half splash = 0.55h * (1.0h - smoothstep(0.012, 0.050, contact));
+                half active = 1.0h - smoothstep(0.0, 0.35, _Time.y - _Impact.z);
+                half glint = active * (splash + ripple * (0.55h + 0.45h * mottling));
+                return half4(damp * opacity + glint * half3(0.85h, 1.65h, 2.65h), opacity);
             }
             ENDHLSL
         }

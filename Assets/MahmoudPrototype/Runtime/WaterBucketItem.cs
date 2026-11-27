@@ -17,6 +17,10 @@ namespace ButterflyEffect.Prototype
         private bool desktopPour;
         private bool wasPouring;
         private float desktopTiltAngle;
+        private const float MaxDrop = 3f;
+        private const int ArcSegments = 5;
+        private readonly Vector3[] pourPath = new Vector3[ArcSegments + 2];
+        internal Camera DesktopView { private get; set; }
         public override string HeldHint => "Hold R: pour | F beside water barrel: refill | E: set down on level ground";
         public override Quaternion DesktopHoldRotation => Quaternion.Euler(holdEuler) * Quaternion.Euler(desktopTiltAngle, 0f, 0f);
         public override void DesktopTilt(bool held) { desktopPour = held; }
@@ -66,25 +70,81 @@ namespace ButterflyEffect.Prototype
             { Session.state.poursStarted++; Session.state.totalActions++; Session.Changed(); }
             wasPouring = pouring;
             if (!pouring) return;
-            Vector3 origin = spout.position;
-            Vector3 end = origin + Vector3.down * 3f;
-            float distance = 3f;
-            Collider surface = null;
-            foreach (RaycastHit hit in Physics.RaycastAll(origin, Vector3.down, 3f, ~0, QueryTriggerInteraction.Ignore))
+            Collider surface = TracePour(out int count);
+            Vector3 end = pourPath[count - 1];
+            if (stream != null)
             {
-                if (hit.transform.IsChildOf(transform) || hit.collider.GetComponentInParent<DesktopPlayer>() != null) continue;
-                if (hit.distance < distance) { end = hit.point; distance = hit.distance; surface = hit.collider; }
+                stream.positionCount = count;
+                for (int i = 0; i < count; i++) stream.SetPosition(i, pourPath[i]);
             }
-            if (stream != null) { stream.SetPosition(0, origin); stream.SetPosition(1, end); }
             float amount = Mathf.Min(waterLeft, pourRate * Time.deltaTime);
             waterLeft = Mathf.Max(0f, waterLeft - amount);
             if (surface == null) return;
-            if (surface is TerrainCollider && surface.TryGetComponent(out WetGrass grass))
-                grass.AddWater(end, amount);
+            if (surface is TerrainCollider ground)
+                WetGrass.WaterGround(ground, end, amount);
             // Query the registry each pour so a newly created or enabled fire also receives water.
             foreach (FireTarget target in FireTarget.ActiveTargets)
                 if (target != null && target.ReceiveWater(end, amount)) break;
         }
+
+        private Collider TracePour(out int count)
+        {
+            Vector3 origin = spout.position;
+            pourPath[0] = origin;
+            count = 1;
+            Vector3 sideways = Vector3.zero;
+            float drop = MaxDrop;
+            if (!HeldInXR && DesktopView != null)
+            {
+                Transform eye = DesktopView.transform;
+                if (FirstSurface(eye.position, eye.forward, 3.5f, out RaycastHit aim) && aim.point.y < origin.y - 0.05f)
+                {
+                    Vector3 delta = aim.point - origin;
+                    sideways = Vector3.ClampMagnitude(new Vector3(delta.x, 0f, delta.z), 0.95f);
+                    drop = Mathf.Min(MaxDrop, -delta.y + 0.02f);
+                }
+            }
+
+            int steps = sideways.sqrMagnitude > 0.0001f ? ArcSegments : 1;
+            for (int i = 1; i <= steps; i++)
+            {
+                float t = (float)i / steps;
+                Vector3 next = origin + sideways * t + Vector3.down * (drop * t * t);
+                if (AppendSegment(next, ref count, out Collider hit)) return hit;
+            }
+            // A low ledge can end before the intended landing spot. Continue down to the ground.
+            if (drop < MaxDrop && AppendSegment(origin + sideways + Vector3.down * MaxDrop, ref count, out Collider below))
+                return below;
+            return null;
+        }
+
+        private bool AppendSegment(Vector3 next, ref int count, out Collider collider)
+        {
+            Vector3 start = pourPath[count - 1];
+            Vector3 segment = next - start;
+            bool hit = FirstSurface(start, segment.normalized, segment.magnitude, out RaycastHit contact);
+            pourPath[count++] = hit ? contact.point : next;
+            collider = hit ? contact.collider : null;
+            return hit;
+        }
+
+        private bool FirstSurface(Vector3 origin, Vector3 direction, float distance, out RaycastHit nearest)
+        {
+            if (!Physics.Raycast(origin, direction, out nearest, distance, ~0, QueryTriggerInteraction.Ignore))
+                return false;
+            if (IsExternalSurface(nearest)) return true;
+
+            nearest = default;
+            foreach (RaycastHit hit in Physics.RaycastAll(origin, direction, distance, ~0, QueryTriggerInteraction.Ignore))
+            {
+                if (IsExternalSurface(hit) && (nearest.collider == null || hit.distance < nearest.distance))
+                    nearest = hit;
+            }
+            return nearest.collider != null;
+        }
+
+        private bool IsExternalSurface(RaycastHit hit) =>
+            !hit.transform.IsChildOf(transform) && hit.collider.GetComponentInParent<DesktopPlayer>() == null;
 
         public override void Use()
         {

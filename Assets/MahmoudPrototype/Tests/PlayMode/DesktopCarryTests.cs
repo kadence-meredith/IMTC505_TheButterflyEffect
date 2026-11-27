@@ -10,6 +10,7 @@ namespace ButterflyEffect.Prototype.Tests
     public sealed class DesktopCarryTests
     {
         private GameObject playerObject, itemObject, station, managerObject;
+        private TerrainData testTerrain;
         private DesktopPlayer player;
         private Camera camera;
 
@@ -110,6 +111,91 @@ namespace ButterflyEffect.Prototype.Tests
             Assert.That(bucket.waterLeft, Is.EqualTo(remaining));
         }
 
+        private GameObject MakeFlatTerrain()
+        {
+            var ground = new GameObject("Test terrain");
+            ground.transform.SetParent(station.transform, false);
+            ground.transform.position = new Vector3(-4f, 0f, -4f);
+            testTerrain = new TerrainData { heightmapResolution = 33, size = new Vector3(8f, 1f, 8f) };
+            ground.AddComponent<TerrainCollider>().terrainData = testTerrain;
+            Physics.SyncTransforms();
+            return ground;
+        }
+
+        [UnityTest]
+        public IEnumerator PouringOnCampsiteTerrainCreatesAMissingWetGrassReceiver()
+        {
+            GameObject ground = MakeFlatTerrain();
+            WaterBucketItem bucket = MakeItem<WaterBucketItem>();
+            bucket.spout = bucket.transform;
+            player.Grab(bucket);
+            Physics.SyncTransforms();
+            bucket.DesktopTilt(true);
+            yield return new WaitForSeconds(0.15f);
+            Assert.That(bucket.waterLeft, Is.LessThan(bucket.capacity));
+            Assert.That(ground.GetComponent<WetGrass>(), Is.Null);
+
+            ground.AddComponent<CampsiteGround>();
+            yield return new WaitForSeconds(0.15f);
+            var patch = ground.GetComponentInChildren<MeshRenderer>();
+            Assert.That(patch, Is.Not.Null);
+            Assert.That(patch.enabled && patch.gameObject.activeInHierarchy, Is.True);
+            Assert.That(patch.sharedMaterial.shader.name, Is.EqualTo("Butterfly Effect/Wet Grass"));
+            if (SystemInfo.graphicsDeviceType != UnityEngine.Rendering.GraphicsDeviceType.Null)
+                Assert.That(patch.sharedMaterial.shader.isSupported, Is.True);
+            var appearance = new MaterialPropertyBlock();
+            patch.GetPropertyBlock(appearance);
+            Assert.That(appearance.GetFloat("_WetAmount"), Is.GreaterThan(0f));
+
+            bucket.DesktopTilt(false);
+            yield return null;
+            bucket.DesktopTilt(true);
+            yield return new WaitForSeconds(0.15f);
+            Assert.That(ground.GetComponents<WetGrass>(), Has.Length.EqualTo(1));
+            Assert.That(ground.GetComponentsInChildren<MeshRenderer>(), Has.Length.EqualTo(1));
+        }
+
+        [UnityTest]
+        public IEnumerator DesktopPourFollowsTheReticleAndStopsAtAnObstacleInItsPath()
+        {
+            GameObject ground = MakeFlatTerrain();
+            ground.AddComponent<CampsiteGround>();
+            Vector3 aim = new Vector3(0f, 0f, 1f);
+            camera.transform.LookAt(aim);
+
+            WaterBucketItem bucket = MakeItem<WaterBucketItem>();
+            bucket.spout = bucket.transform;
+            bucket.stream = itemObject.AddComponent<LineRenderer>();
+            bucket.stream.useWorldSpace = true;
+            bucket.holdOffset = camera.transform.InverseTransformPoint(new Vector3(0.65f, 1f, 0.8f));
+            player.Grab(bucket);
+
+            var obstacle = new GameObject("Block beside reticle").AddComponent<BoxCollider>();
+            obstacle.transform.SetParent(station.transform, false);
+            obstacle.transform.position = new Vector3(0.33f, 0.75f, 0.90f);
+            obstacle.size = new Vector3(0.23f, 0.28f, 0.34f);
+            Physics.SyncTransforms();
+            Ray sight = new Ray(camera.transform.position, camera.transform.forward);
+            Assert.That(obstacle.Raycast(sight, out _, 3.5f), Is.False);
+
+            bucket.DesktopTilt(true);
+            yield return new WaitForSeconds(0.2f);
+            Assert.That(bucket.stream.enabled, Is.True);
+            Vector3 blocked = bucket.stream.GetPosition(bucket.stream.positionCount - 1);
+            Assert.That(Vector3.Distance(blocked, obstacle.ClosestPoint(blocked)), Is.LessThan(0.005f));
+            Assert.That(ground.GetComponentInChildren<MeshRenderer>(), Is.Null);
+
+            obstacle.enabled = false;
+            Physics.SyncTransforms();
+            yield return new WaitForSeconds(0.2f);
+            Vector3 contact = bucket.stream.GetPosition(bucket.stream.positionCount - 1);
+            Assert.That(Vector3.Distance(contact, aim), Is.LessThan(0.04f));
+            var patch = ground.GetComponentInChildren<MeshRenderer>();
+            Assert.That(patch, Is.Not.Null);
+            Vector3 wetCenter = Vector3.ProjectOnPlane(patch.bounds.center, Vector3.up);
+            Assert.That(Vector3.Distance(wetCenter, aim), Is.LessThan(0.04f));
+        }
+
         [Test]
         public void BucketPlacementClearsTheGroundAndAvoidsObstacles()
         {
@@ -144,6 +230,7 @@ namespace ButterflyEffect.Prototype.Tests
         {
             if (player != null) player.DropHeld(false);
             Object.Destroy(playerObject); Object.Destroy(itemObject); Object.Destroy(station); Object.Destroy(managerObject);
+            if (testTerrain != null) Object.Destroy(testTerrain);
             yield return null;
         }
     }

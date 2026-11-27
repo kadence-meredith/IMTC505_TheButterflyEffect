@@ -4,7 +4,7 @@ using UnityEngine.Rendering;
 
 namespace ButterflyEffect.Prototype
 {
-    [RequireComponent(typeof(TerrainCollider))]
+    [RequireComponent(typeof(TerrainCollider)), DisallowMultipleComponent]
     public sealed class WetGrass : MonoBehaviour, IPrototypeResettable
     {
         [SerializeField] private Shader wetGrassShader;
@@ -17,6 +17,7 @@ namespace ButterflyEffect.Prototype
         private const float DryAfter = 30f;
         private const float DryDuration = 15f;
         private static readonly int WetAmount = Shader.PropertyToID("_WetAmount");
+        private static readonly int Impact = Shader.PropertyToID("_Impact");
         private readonly List<Patch> patches = new List<Patch>();
         private readonly Vector3[] vertices = new Vector3[(Segments + 1) * (Segments + 1)];
         private readonly Vector2[] uv = new Vector2[(Segments + 1) * (Segments + 1)];
@@ -31,18 +32,33 @@ namespace ButterflyEffect.Prototype
             public Vector2 center;
             public float water;
             public float lastWaterTime;
+            public Vector2 impactPosition;
         }
 
-        private void Awake()
+        public static void WaterGround(TerrainCollider ground, Vector3 hitPoint, float amount)
         {
-            properties = new MaterialPropertyBlock();
-            terrain = GetComponent<TerrainCollider>().terrainData;
-            if (wetGrassShader != null) material = new Material(wetGrassShader);
+            if (!ground.TryGetComponent(out WetGrass grass))
+            {
+                // A campsite already open during a script update can still have its original hierarchy.
+                if (!ground.TryGetComponent<CampsiteGround>(out _)) return;
+                grass = ground.gameObject.AddComponent<WetGrass>();
+            }
+            if (grass.isActiveAndEnabled) grass.AddWater(hitPoint, amount);
+        }
+
+        private void InitializeSurface()
+        {
+            if (terrain == null) terrain = GetComponent<TerrainCollider>().terrainData;
+            if (wetGrassShader == null) wetGrassShader = Shader.Find("Butterfly Effect/Wet Grass");
+            if (material == null && wetGrassShader != null) material = new Material(wetGrassShader);
+            if (properties == null) properties = new MaterialPropertyBlock();
         }
 
         public void AddWater(Vector3 hitPoint, float amount)
         {
-            if (amount <= 0f || terrain == null || material == null) return;
+            if (amount <= 0f) return;
+            InitializeSurface();
+            if (terrain == null || material == null) return;
             Vector3 local = transform.InverseTransformPoint(hitPoint);
             Vector2 center = new Vector2(local.x, local.z);
             // Tree colliders can be part of the terrain as well.
@@ -62,6 +78,7 @@ namespace ButterflyEffect.Prototype
             if (nearest == null) nearest = StartPatch(center);
             nearest.water = Mathf.Min(1f, nearest.water + amount / SaturationVolume);
             nearest.lastWaterTime = Time.time;
+            nearest.impactPosition = new Vector2(hitPoint.x, hitPoint.z);
             SetAppearance(nearest);
         }
 
@@ -132,6 +149,7 @@ namespace ButterflyEffect.Prototype
         private void SetAppearance(Patch patch)
         {
             properties.SetFloat(WetAmount, patch.water);
+            properties.SetVector(Impact, new Vector4(patch.impactPosition.x, patch.impactPosition.y, patch.lastWaterTime, 0f));
             patch.renderer.SetPropertyBlock(properties);
         }
 
