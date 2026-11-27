@@ -89,6 +89,56 @@ namespace ButterflyEffect.Prototype.Tests
             Assert.That(item.IsHeld, Is.True);
         }
 
+        [UnityTest]
+        public IEnumerator LookingDownOnlyPoursWhileDesktopPourIsHeld()
+        {
+            WaterBucketItem bucket = MakeItem<WaterBucketItem>();
+            bucket.spout = new GameObject("Spout").transform;
+            bucket.spout.SetParent(bucket.transform, false);
+            camera.transform.localRotation = Quaternion.Euler(70f, 0f, 0f);
+            player.Grab(bucket);
+
+            yield return new WaitForSeconds(0.25f);
+            Assert.That(bucket.waterLeft, Is.EqualTo(bucket.capacity));
+            bucket.DesktopTilt(true);
+            yield return new WaitForSeconds(0.45f);
+            Assert.That(bucket.waterLeft, Is.LessThan(bucket.capacity));
+
+            bucket.DesktopTilt(false);
+            float remaining = bucket.waterLeft;
+            yield return new WaitForSeconds(0.25f);
+            Assert.That(bucket.waterLeft, Is.EqualTo(remaining));
+        }
+
+        [Test]
+        public void BucketPlacementClearsTheGroundAndAvoidsObstacles()
+        {
+            GameObject ground = GameObject.CreatePrimitive(PrimitiveType.Cube);
+            ground.transform.SetParent(station.transform, false);
+            ground.transform.position = new Vector3(0f, -0.1f, 1f);
+            ground.transform.localScale = new Vector3(8f, 0.2f, 8f);
+
+            WaterBucketItem bucket = MakeItem<WaterBucketItem>();
+            BoxCollider box = bucket.GetComponent<BoxCollider>();
+            box.size = new Vector3(0.4f, 0.6f, 0.4f);
+            box.center = new Vector3(0f, 0.1f, 0f);
+            player.Grab(bucket);
+            Physics.SyncTransforms();
+
+            Assert.That(bucket.TryGetPlacementPose(player.transform, out Pose front), Is.True);
+            Assert.That(Vector3.Angle(front.rotation * Vector3.up, Vector3.up), Is.LessThan(0.1f));
+            float bottom = front.position.y + box.center.y - box.size.y * 0.5f;
+            Assert.That(bottom, Is.InRange(0f, 0.02f));
+
+            GameObject obstacle = GameObject.CreatePrimitive(PrimitiveType.Cube);
+            obstacle.transform.SetParent(station.transform, false);
+            obstacle.transform.position = new Vector3(front.position.x, 0.5f, front.position.z);
+            obstacle.transform.localScale = new Vector3(0.35f, 1f, 0.35f);
+            Physics.SyncTransforms();
+            Assert.That(bucket.TryGetPlacementPose(player.transform, out Pose alternate), Is.True);
+            Assert.That(Vector3.Distance(front.position, alternate.position), Is.GreaterThan(0.38f));
+        }
+
         [UnityTearDown]
         public IEnumerator TearDown()
         {

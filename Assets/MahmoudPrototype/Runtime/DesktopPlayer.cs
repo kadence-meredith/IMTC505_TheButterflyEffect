@@ -24,6 +24,7 @@ namespace ButterflyEffect.Prototype
         private bool aimingThrow;
         private bool isLooking;
         private float nextTargetScan;
+        private float placementHintUntil;
         private PrototypeItem targetItem;
         private PrototypeButton targetButton;
         private bool heldGravity;
@@ -61,11 +62,7 @@ namespace ButterflyEffect.Prototype
             if (transform.position.y < -8f) GoToStation(0);
 
             ScanTarget();
-            if (keys.eKey.wasPressedThisFrame)
-            {
-                if (Held != null) DropHeld(false);
-                else if (targetItem != null) Grab(targetItem);
-            }
+            if (keys.eKey.wasPressedThisFrame) InteractWithItem();
             if (keys.fKey.wasPressedThisFrame)
             {
                 if (Held != null) Held.Use();
@@ -85,6 +82,22 @@ namespace ButterflyEffect.Prototype
             if (keys.digit4Key.wasPressedThisFrame) GoToStation(3);
             if (keys.backspaceKey.wasPressedThisFrame && PrototypeSession.Instance != null) PrototypeSession.Instance.ResetRun();
             // No prototype debrief overlay in the final campsite.
+        }
+
+        private void InteractWithItem()
+        {
+            if (Held is WaterBucketItem bucket)
+            {
+                if (bucket.TryGetPlacementPose(transform, out Pose pose))
+                {
+                    SetItemPose(bucket, pose);
+                    ReleaseHeld(false);
+                }
+                else placementHintUntil = Time.time + 2f;
+                return;
+            }
+            if (Held != null) DropHeld(false);
+            else if (targetItem != null) Grab(targetItem);
         }
 
         private void ScanTarget()
@@ -157,25 +170,33 @@ namespace ButterflyEffect.Prototype
         {
             if (Held == null || view == null) return;
             if (!Held.gameObject.activeInHierarchy) { DropHeld(false); return; }
-            Vector3 position = view.transform.TransformPoint(Held.holdOffset);
-            Quaternion rotation = view.transform.rotation * Held.DesktopHoldRotation;
+            SetItemPose(Held, GetCarryPose(Held));
+        }
+
+        private Pose GetCarryPose(PrototypeItem item)
+        {
+            Quaternion facing = item is WaterBucketItem ? transform.rotation : view.transform.rotation;
+            return new Pose(view.transform.TransformPoint(item.holdOffset), facing * item.DesktopHoldRotation);
+        }
+
+        private static void SetItemPose(PrototypeItem item, Pose pose)
+        {
             // No interpolated, parented Rigidbody: explicitly synchronize the physics and visible poses.
-            Held.Body.position = position;
-            Held.Body.rotation = rotation;
-            Held.transform.SetPositionAndRotation(position, rotation);
+            item.Body.position = pose.position;
+            item.Body.rotation = pose.rotation;
+            item.transform.SetPositionAndRotation(pose.position, pose.rotation);
         }
 
         public void DropHeld(bool throwing)
         {
             if (Held == null) return;
+            if (view != null) SetItemPose(Held, GetCarryPose(Held));
+            ReleaseHeld(throwing);
+        }
+
+        private void ReleaseHeld(bool throwing)
+        {
             PrototypeItem item = Held;
-            if (view != null)
-            {
-                Vector3 position = view.transform.TransformPoint(item.holdOffset);
-                Quaternion rotation = view.transform.rotation * item.DesktopHoldRotation;
-                item.Body.position = position; item.Body.rotation = rotation;
-                item.transform.SetPositionAndRotation(position, rotation);
-            }
             Held = null; aimingThrow = false;
             item.DesktopTilt(false);
             item.Body.isKinematic = heldKinematic;
@@ -252,13 +273,16 @@ private void OnGUI()
     );
 
     GUI.color = previous;
+    if (Held is WaterBucketItem && Time.time < placementHintUntil)
+        GUI.Box(new Rect(x - 160f, y + 28f, 320f, 26f), "Move to a clear, level spot and press E.");
 }
 
-private void OnApplicationFocus(bool hasFocus)
-{
-    if (!hasFocus)
-        EndLook();
-}
+        private void OnApplicationFocus(bool hasFocus)
+        {
+            if (hasFocus) return;
+            EndLook();
+            if (Held != null) Held.DesktopTilt(false);
+        }
 
         private void EndLook() { isLooking = false; Cursor.lockState = CursorLockMode.None; Cursor.visible = true; }
         private void OnDisable()
