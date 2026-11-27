@@ -69,16 +69,18 @@ namespace ButterflyEffect.Prototype
             Vector3 origin = spout.position;
             Vector3 end = origin + Vector3.down * 3f;
             float distance = 3f;
-            bool hasHit = false;
+            Collider surface = null;
             foreach (RaycastHit hit in Physics.RaycastAll(origin, Vector3.down, 3f, ~0, QueryTriggerInteraction.Ignore))
             {
                 if (hit.transform.IsChildOf(transform) || hit.collider.GetComponentInParent<DesktopPlayer>() != null) continue;
-                if (hit.distance < distance) { end = hit.point; distance = hit.distance; hasHit = true; }
+                if (hit.distance < distance) { end = hit.point; distance = hit.distance; surface = hit.collider; }
             }
             if (stream != null) { stream.SetPosition(0, origin); stream.SetPosition(1, end); }
             float amount = Mathf.Min(waterLeft, pourRate * Time.deltaTime);
             waterLeft = Mathf.Max(0f, waterLeft - amount);
-            if (!hasHit) return;
+            if (surface == null) return;
+            if (surface is TerrainCollider && surface.TryGetComponent(out WetGrass grass))
+                grass.AddWater(end, amount);
             // Query the registry each pour so a newly created or enabled fire also receives water.
             foreach (FireTarget target in FireTarget.ActiveTargets)
                 if (target != null && target.ReceiveWater(end, amount)) break;
