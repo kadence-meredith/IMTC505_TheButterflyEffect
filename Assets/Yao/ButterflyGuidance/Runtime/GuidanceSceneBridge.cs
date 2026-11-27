@@ -27,6 +27,8 @@ namespace ButterflyEffect.Guidance
         public GuidanceReturnPortal returnPortal;
         public Transform cigaretteGroundAnchor;
         public bool sequentialExploration = true;
+        public bool scriptedNarration;
+        public GuidanceStoryFlow storyFlow;
         public GuidanceCampsiteSequence campsiteSequence;
 
         public bool UsesSequentialExploration => role == GuidanceSceneRole.Campsite && sequentialExploration;
@@ -76,6 +78,12 @@ namespace ButterflyEffect.Guidance
             initializationFrame = Time.frameCount;
             queuedPhysicalLine = null;
             WaitingForPhysicalAction = false;
+            if (scriptedNarration)
+            {
+                if (storyFlow == null) storyFlow = GetComponent<GuidanceStoryFlow>();
+                if (storyFlow != null) storyFlow.Initialize(this);
+                if (role != GuidanceSceneRole.Campsite) return;
+            }
             if (UsesSequentialExploration)
             {
                 if (campsiteSequence == null) campsiteSequence = GetComponent<GuidanceCampsiteSequence>();
@@ -94,9 +102,10 @@ namespace ButterflyEffect.Guidance
             SubscribeSession();
             SyncFromSession();
             UpdateCigaretteAnchor();
+            if (scriptedNarration && role != GuidanceSceneRole.Campsite) return;
             if (UsesSequentialExploration && campsiteSequence != null && campsiteSequence.IsInitialized)
             {
-                // Exploration handles nearby props immediately, independently of the suggested route.
+                // The station sequence owns narrative and interaction presentation.
                 previous = Capture();
                 queuedPhysicalLine = null;
                 return;
@@ -178,7 +187,7 @@ namespace ButterflyEffect.Guidance
         /// <summary>Fully handles real-scene choices before any standalone demo action runs.</summary>
         public bool HandleChoice(GuidanceChoice choice)
         {
-            if (choice == null || director == null) return true;
+            if (choice == null || director == null || scriptedNarration) return true;
             if (!UsesSequentialExploration && (WaitingForPhysicalAction
                 || coordinator != null && coordinator.IsTravelling)) return true;
             SyncFromSession();
@@ -299,7 +308,7 @@ namespace ButterflyEffect.Guidance
 
         public bool HandleAdvance()
         {
-            if (UsesSequentialExploration) return true;
+            if (UsesSequentialExploration || scriptedNarration) return true;
             if (director == null || WaitingForPhysicalAction
                 || coordinator != null && coordinator.IsTravelling) return true;
             if (director.Current == null) { Initialize(); return true; }
@@ -318,6 +327,7 @@ namespace ButterflyEffect.Guidance
 
         public void Explore(string station)
         {
+            if (scriptedNarration) return;
             SyncFromSession();
             switch ((station ?? string.Empty).Trim().ToLowerInvariant())
             {
@@ -355,7 +365,7 @@ namespace ButterflyEffect.Guidance
 
         private void ShowLine(string id)
         {
-            if (director == null || string.IsNullOrEmpty(id)) return;
+            if (scriptedNarration || director == null || string.IsNullOrEmpty(id)) return;
             WaitingForPhysicalAction = false;
             if (view != null && (coordinator == null || !coordinator.IsTravelling)) view.ResumeDialogue();
             SyncFromSession();

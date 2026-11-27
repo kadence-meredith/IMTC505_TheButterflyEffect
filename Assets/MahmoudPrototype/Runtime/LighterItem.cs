@@ -8,6 +8,7 @@ namespace ButterflyEffect.Prototype
         public override string HeldHint => "F: light campfire | E: drop";
         public override void Use()
         {
+            if (!PrototypeInteractionPolicy.CanUse(this)) return;
             Vector3 position = tip != null ? tip.position : transform.position;
             foreach (FireTarget fire in FireTarget.ActiveTargets)
             {

@@ -23,6 +23,7 @@ namespace ButterflyEffect.Guidance
         public bool InteractionLocked { get; private set; }
         public bool IsExplorationMode { get; private set; }
         public bool ContextVisible { get; private set; }
+        public bool SequencePanelActive { get; private set; }
         public bool TransientPromptVisible => IsExplorationMode && promptRemaining > 0f;
         [SerializeField] private Text title;
         [SerializeField] private Text speaker;
@@ -39,6 +40,10 @@ namespace ButterflyEffect.Guidance
         private int optionCount;
         private float promptRemaining;
         private string transientPrompt;
+        private Action<int> sequenceSelection;
+        private string[] sequenceLabels = Array.Empty<string>();
+        private int sequencePanelVersion;
+        private float sequenceLayoutWidth;
         private bool entryPromptShown;
         private bool savedLayout;
         private RectTransform card;
@@ -84,7 +89,7 @@ namespace ButterflyEffect.Guidance
                 events.AddComponent<StandaloneInputModule>();
 #endif
             }
-            if (title != null) title.gameObject.SetActive(showDemoHeadings);
+            if (title != null) title.gameObject.SetActive(showDemoHeadings && !IsExplorationMode && !SequencePanelActive);
         }
 
         private void OnEnable()
@@ -107,8 +112,16 @@ namespace ButterflyEffect.Guidance
 
         private void Update()
         {
-            AdvancePrompt(Time.unscaledDeltaTime);
-            if (IsExplorationMode) ApplyExplorationLayout(TransientPromptVisible);
+            if (SequencePanelActive)
+            {
+                if (canvas != null && !Mathf.Approximately(((RectTransform)canvas.transform).rect.width, sequenceLayoutWidth))
+                    ApplySequenceLayout();
+            }
+            else
+            {
+                AdvancePrompt(Time.unscaledDeltaTime);
+                if (IsExplorationMode) ApplyExplorationLayout(TransientPromptVisible);
+            }
 #if ENABLE_INPUT_SYSTEM
             var keyboard = Keyboard.current;
             if (keyboard != null)
@@ -129,6 +142,11 @@ namespace ButterflyEffect.Guidance
 
         private void Select(int index)
         {
+            if (SequencePanelActive)
+            {
+                if (index >= 0 && index < optionCount) sequenceSelection?.Invoke(index);
+                return;
+            }
             if (InteractionLocked || index < 0 || index >= optionCount || director == null) return;
             if (IsExplorationMode && (!ContextVisible || TransientPromptVisible)) return;
             if (displayed != null && displayed.choices != null && displayed.choices.Length > 0)
@@ -142,6 +160,7 @@ namespace ButterflyEffect.Guidance
         {
             if (line == null || dialogue == null) return;
             displayed = line;
+            if (SequencePanelActive) return;
             if (IsExplorationMode)
             {
                 PresentExploration(line);
@@ -194,6 +213,7 @@ namespace ButterflyEffect.Guidance
 
         public void ShowTravelPrompt(string message)
         {
+            if (SequencePanelActive) return;
             if (IsExplorationMode)
             {
                 InteractionLocked = false;
@@ -208,6 +228,7 @@ namespace ButterflyEffect.Guidance
 
         public void ResumeDialogue()
         {
+            if (SequencePanelActive) return;
             InteractionLocked = false;
             var line = director != null && director.Current != null ? director.Current : displayed;
             if (line != null) Present(line);
@@ -215,6 +236,12 @@ namespace ButterflyEffect.Guidance
 
         public void SetExplorationMode(bool enabled)
         {
+            if (SequencePanelActive)
+            {
+                IsExplorationMode = enabled;
+                ApplySequenceLayout();
+                return;
+            }
             if (IsExplorationMode == enabled)
             {
                 if (enabled) ApplyExplorationLayout(TransientPromptVisible);
@@ -241,7 +268,7 @@ namespace ButterflyEffect.Guidance
                 dialogueLayout.Restore();
                 choicesLayout.Restore();
                 if (speaker != null) speaker.gameObject.SetActive(speakerWasActive);
-                if (title != null) title.gameObject.SetActive(showDemoHeadings);
+                if (title != null) title.gameObject.SetActive(showDemoHeadings && !IsExplorationMode && !SequencePanelActive);
                 if (dialogue != null)
                 {
                     dialogue.fontSize = originalFontSize;
@@ -258,6 +285,7 @@ namespace ButterflyEffect.Guidance
         {
             if (ContextVisible == visible) return;
             ContextVisible = visible;
+            if (SequencePanelActive) return;
             if (!IsExplorationMode) return;
             var line = director != null && director.Current != null ? director.Current : displayed;
             if (line != null) Present(line);
@@ -266,7 +294,7 @@ namespace ButterflyEffect.Guidance
 
         public void ShowTransientPrompt(string message, float duration)
         {
-            if (!IsExplorationMode || entryPromptShown || string.IsNullOrEmpty(message)
+            if (SequencePanelActive || !IsExplorationMode || entryPromptShown || string.IsNullOrEmpty(message)
                 || float.IsNaN(duration) || float.IsInfinity(duration) || duration <= 0f) return;
             entryPromptShown = true;
             transientPrompt = message;
@@ -277,7 +305,7 @@ namespace ButterflyEffect.Guidance
 
         public void AdvancePrompt(float deltaTime)
         {
-            if (!TransientPromptVisible || float.IsNaN(deltaTime) || float.IsInfinity(deltaTime) || deltaTime <= 0f) return;
+            if (SequencePanelActive || !TransientPromptVisible || float.IsNaN(deltaTime) || float.IsInfinity(deltaTime) || deltaTime <= 0f) return;
             promptRemaining = Mathf.Max(0f, promptRemaining - deltaTime);
             if (promptRemaining > 0f) return;
             var line = director != null && director.Current != null ? director.Current : displayed;
@@ -364,6 +392,106 @@ namespace ButterflyEffect.Guidance
             return string.Empty;
         }
 
+        public void ShowSequencePanel(string text, string[] labels, Action<int> onSelect)
+        {
+            Build();
+            SaveLayout();
+            ClearChoices();
+            SequencePanelActive = true;
+            sequencePanelVersion++;
+            sequenceSelection = onSelect;
+            sequenceLabels = labels == null ? Array.Empty<string>() : (string[])labels.Clone();
+            optionCount = sequenceLabels.Length;
+            promptRemaining = 0f;
+            transientPrompt = null;
+            InteractionLocked = false;
+            if (dialogue != null) dialogue.text = text ?? string.Empty;
+            if (speaker != null) speaker.gameObject.SetActive(false);
+            if (title != null) title.gameObject.SetActive(false);
+            ApplySequenceLayout();
+            int columns = ChoiceColumns();
+            int rows = Mathf.CeilToInt(optionCount / (float)columns);
+            int version = sequencePanelVersion;
+            for (int i = 0; i < optionCount; i++)
+            {
+                int index = i;
+                var button = MakeButton(choices, "Sequence choice " + (i + 1), sequenceLabels[i] ?? string.Empty,
+                    new Vector2(i % columns / (float)columns, 1f - (i / columns + 1) / (float)rows),
+                    new Vector2((i % columns + 1) / (float)columns, 1f - (i / columns) / (float)rows),
+                    () => { if (SequencePanelActive && version == sequencePanelVersion) Select(index); }, i == 0);
+                var rect = (RectTransform)button.transform;
+                rect.offsetMin = new Vector2(i % columns == 0 ? 0f : 6f, 4f);
+                rect.offsetMax = new Vector2(i % columns == columns - 1 ? 0f : -6f, -4f);
+                if (optionCount == 1)
+                {
+                    rect.anchorMin = new Vector2(.30f, 0f);
+                    rect.anchorMax = new Vector2(.70f, 1f);
+                }
+                activeButtons.Add(button);
+            }
+            SetCardVisible(!string.IsNullOrEmpty(text) || optionCount > 0);
+            if (EventSystem.current != null) EventSystem.current.SetSelectedGameObject(null);
+        }
+
+        public void HideSequencePanel()
+        {
+            if (!SequencePanelActive) return;
+            SequencePanelActive = false;
+            sequencePanelVersion++;
+            sequenceSelection = null;
+            sequenceLabels = Array.Empty<string>();
+            ClearChoices();
+            optionCount = 0;
+            SetCardVisible(false);
+        }
+
+        private void ApplySequenceLayout()
+        {
+            if (canvas == null || dialogue == null || choices == null) return;
+            if (card == null) card = dialogue.transform.parent as RectTransform;
+            if (card == null) return;
+            bool world = canvas.renderMode == RenderMode.WorldSpace;
+            float left = world ? .13f : .20f;
+            float bottom = world ? .06f : .065f;
+            SetRect(card, new Vector2(left, bottom), new Vector2(1f - left, bottom));
+            float padding = world ? 40f : 32f;
+            sequenceLayoutWidth = ((RectTransform)canvas.transform).rect.width;
+            float contentWidth = sequenceLayoutWidth * (1f - 2f * left) - padding * 2f;
+            contentWidth = Mathf.Max(1f, contentWidth);
+            int fontSize = world ? 36 : 30;
+            dialogue.fontSize = fontSize;
+            dialogue.resizeTextMinSize = world ? 32 : 28;
+            dialogue.resizeTextMaxSize = fontSize;
+            dialogue.alignment = TextAnchor.MiddleLeft;
+            float textHeight = PreferredSequenceTextHeight(dialogue.text, contentWidth, fontSize);
+            int columns = ChoiceColumns();
+            int rows = Mathf.CeilToInt(optionCount / (float)columns);
+            float rowHeight = 80f;
+            float buttonWidth = optionCount == 1 ? contentWidth * .40f : contentWidth / columns;
+            foreach (string label in sequenceLabels)
+                rowHeight = Mathf.Max(rowHeight, PreferredSequenceTextHeight(label, Mathf.Max(1f, (buttonWidth - 12f) * .93f), choiceFontSize) + 24f);
+            float choicesHeight = rows * rowHeight;
+            float gap = textHeight > 0f && rows > 0 ? 20f : 0f;
+            card.offsetMax = new Vector2(0f, Mathf.Max(100f, padding * 2f + textHeight + gap + choicesHeight));
+            SetRect(dialogue.rectTransform, Vector2.zero, Vector2.one);
+            dialogue.rectTransform.offsetMin = new Vector2(padding, padding + choicesHeight + gap);
+            dialogue.rectTransform.offsetMax = new Vector2(-padding, -padding);
+            SetRect(choices, Vector2.zero, Vector2.right);
+            choices.offsetMin = new Vector2(padding, padding);
+            choices.offsetMax = new Vector2(-padding, padding + choicesHeight);
+        }
+
+        private float PreferredSequenceTextHeight(string value, float width, int fontSize)
+        {
+            if (dialogue == null || dialogue.font == null || string.IsNullOrEmpty(value)) return 0f;
+            var settings = dialogue.GetGenerationSettings(new Vector2(width, 0f));
+            settings.resizeTextForBestFit = false;
+            settings.fontSize = fontSize;
+            settings.verticalOverflow = VerticalWrapMode.Overflow;
+            using (var generator = new TextGenerator())
+                return Mathf.Ceil(generator.GetPreferredHeight(value, settings) / dialogue.pixelsPerUnit);
+        }
+
         private void RenderTransientPrompt()
         {
             ClearChoices();
@@ -393,6 +521,7 @@ namespace ButterflyEffect.Guidance
 
         private int ChoiceColumns()
         {
+            if (SequencePanelActive && optionCount == 4) return 2;
             return Math.Max(1, Math.Min(3, optionCount));
         }
 
@@ -415,6 +544,7 @@ namespace ButterflyEffect.Guidance
 
         private void ApplyExplorationLayout(bool prompt)
         {
+            if (SequencePanelActive) { ApplySequenceLayout(); return; }
             SaveLayout();
             if (card == null || dialogue == null || choices == null) return;
             bool world = canvas != null && canvas.renderMode == RenderMode.WorldSpace;
@@ -517,7 +647,7 @@ namespace ButterflyEffect.Guidance
             if (title != null)
             {
                 title.color = ink;
-                title.gameObject.SetActive(showDemoHeadings && !IsExplorationMode);
+                title.gameObject.SetActive(showDemoHeadings && !IsExplorationMode && !SequencePanelActive);
             }
             dialogue.color = ink;
             dialogue.font = bodyFont;
@@ -528,7 +658,8 @@ namespace ButterflyEffect.Guidance
             int index = 0;
             foreach (var button in choices.GetComponentsInChildren<Button>(true))
                 StyleButton(button, index++ == 0);
-            if (IsExplorationMode) ApplyExplorationLayout(TransientPromptVisible);
+            if (SequencePanelActive) ApplySequenceLayout();
+            else if (IsExplorationMode) ApplyExplorationLayout(TransientPromptVisible);
             else ApplyDialogueLayout();
         }
 

@@ -111,16 +111,25 @@ namespace ButterflyEffect.Guidance
                 Quaternion rotation = authoredRotation;
                 if (setup != null)
                 {
-                    // The XR campsite spawn sits inside the tent. Enter the computer route
-                    // from the clear space just in front of the return portal instead.
-                    position = new Vector3(-.436f,
-                        setup.playerSpawn != null ? setup.playerSpawn.position.y : .1038f, .65f);
-                    Transform arrival = FindStation(bridge != null && bridge.UsesSequentialExploration
-                        ? "cigarette." : "forest.arrival");
-                    if (arrival == null) arrival = FindStation("forest.arrival");
-                    Vector3 heading = arrival != null ? arrival.position - position : Vector3.forward;
-                    heading.y = 0f;
-                    if (heading.sqrMagnitude > .001f) rotation = Quaternion.LookRotation(heading);
+                    if (bridge != null && bridge.scriptedNarration && setup.playerSpawn != null)
+                    {
+                        position = setup.playerSpawn.position;
+                        rotation = setup.playerSpawn.rotation;
+                        var spawns = desktopPlayer.stationSpawns;
+                        spawns = spawns != null && spawns.Length > 0 ? (Transform[])spawns.Clone() : new Transform[1];
+                        spawns[0] = setup.playerSpawn;
+                        desktopPlayer.stationSpawns = spawns;
+                    }
+                    else
+                    {
+                        position = new Vector3(-.436f, setup.playerSpawn != null ? setup.playerSpawn.position.y : .1038f, .65f);
+                        Transform arrival = FindStation(bridge != null && bridge.UsesSequentialExploration
+                            ? "cigarette." : "forest.arrival");
+                        if (arrival == null) arrival = FindStation("forest.arrival");
+                        Vector3 heading = arrival != null ? arrival.position - position : Vector3.forward;
+                        heading.y = 0f;
+                        if (heading.sqrMagnitude > .001f) rotation = Quaternion.LookRotation(heading);
+                    }
                 }
                 PosePlayer(position, rotation);
             }
@@ -140,7 +149,7 @@ namespace ButterflyEffect.Guidance
                 node != null && node.IsChildOf(desktopPlayer.transform); node = node.parent)
                 node.gameObject.SetActive(true);
             desktopPlayer.gameObject.tag = "Player";
-            if (created)
+            if (created && (setup == null || bridge == null || !bridge.scriptedNarration || setup.playerSpawn == null))
             {
                 var spawn = new GameObject("Desktop spawn").transform;
                 spawn.SetParent(transform, false);
@@ -153,6 +162,8 @@ namespace ButterflyEffect.Guidance
                 Transform arrival = FindStation("forest.arrival");
                 coordinator.guide.flightHeight = 1.6f;
                 Transform first = bridge != null && bridge.UsesSequentialExploration ? FindStation("cigarette.") : null;
+                if (bridge != null && bridge.scriptedNarration && bridge.campsiteSequence != null
+                    && bridge.campsiteSequence.tentExit != null) first = bridge.campsiteSequence.tentExit;
                 if (first != null)
                 {
                     Vector3 direction = first.position - desktopPlayer.transform.position;
@@ -246,7 +257,12 @@ namespace ButterflyEffect.Guidance
             {
                 campusPortal.user = camera.transform;
                 campusPortal.playerRoot = playerRoot;
-                campusPortal.enabled = desktop;
+                campusPortal.enabled = desktop || bridge != null && bridge.scriptedNarration;
+            }
+            foreach (var portal in SceneComponents<GuidanceCampusPortal>())
+            {
+                portal.user = camera.transform;
+                portal.playerRoot = playerRoot;
             }
         }
 

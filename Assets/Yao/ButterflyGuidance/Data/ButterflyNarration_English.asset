@@ -1,0 +1,172 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 908bc756b223e460e9ae3b51cee567d4, type: 3}
+  m_Name: Butterfly Narration English
+  m_EditorClassIdentifier: Assembly-CSharp::ButterflyEffect.Guidance.GuidanceNarrationLibrary
+  groups:
+  - id: campus.opening
+    paragraphs:
+    - text: Hello there! Welcome to the Virtual UBCO Okanagan campus! I'm Betsy the Butterfly, here to guide your experience.
+      audio: {fileID: 0}
+      subtitleCues:
+      - text: 'Hello there! Welcome to the Virtual UBCO Okanagan campus! '
+        startSeconds: 0
+      - text: I'm Betsy the Butterfly, here to guide your experience.
+        startSeconds: -1
+    - text: One perk of attending this school is how close it is to many campsites and provincial parks.
+      audio: {fileID: 0}
+      subtitleCues:
+      - text: One perk of attending this school is how close it is to many campsites and provincial parks.
+        startSeconds: 0
+    - text: I'd like to show you one, but first, I want to mention an important button on your controller.
+      audio: {fileID: 0}
+      subtitleCues:
+      - text: I'd like to show you one, but first, I want to mention an important button on your controller.
+        startSeconds: 0
+    - text: The Grip button can be used to pick up and drop items.
+      audio: {fileID: 0}
+      subtitleCues:
+      - text: The Grip button can be used to pick up and drop items.
+        startSeconds: 0
+    - text: There's a table over here where you can practice.
+      audio: {fileID: 0}
+      subtitleCues:
+      - text: There's a table over here where you can practice.
+        startSeconds: 0
+    - text: Whenever you're ready, follow me into this portal to be transported into the Okanagan outdoors!
+      audio: {fileID: 0}
+      subtitleCues:
+      - text: Whenever you're ready, follow me into this portal to be transported into the Okanagan outdoors!
+        startSeconds: 0
+  - id: camp.tent
+    paragraphs:
+    - text: Don't be shy! Come on out of that tent!
+      audio: {fileID: 0}
+      subtitleCues:
+      - text: Don't be shy! Come on out of that tent!
+        startSeconds: 0
+  - id: camp.cigarette
+    paragraphs:
+    - text: Oh! I didn't know you smoked! There might be somewhere to put it out when you're done with that cigarette. Or just toss it, I don't care!
+      audio: {fileID: 0}
+      subtitleCues:
+      - text: 'Oh! I didn''t know you smoked! There might be somewhere to put it out when you''re done with that cigarette. '
+        startSeconds: 0
+      - text: Or just toss it, I don't care!
+        startSeconds: -1
+  - id: camp.campfire
+    paragraphs:
+    - text: Anyways, a big part of camping is the campfire, so I started one up for us.
+      audio: {fileID: 0}
+      subtitleCues:
+      - text: Anyways, a big part of camping is the campfire, so I started one up for us.
+        startSeconds: 0
+    - text: The best part of campfires is roasting MARSHMALLOWS!! If you'd like, there's a stick and some marshmallows on the table you can use.
+      audio: {fileID: 0}
+      subtitleCues:
+      - text: 'The best part of campfires is roasting MARSHMALLOWS!! '
+        startSeconds: 0
+      - text: If you'd like, there's a stick and some marshmallows on the table you can use.
+        startSeconds: -1
+  - id: camp.fireworks
+    paragraphs:
+    - text: On special occasions, fireworks and festivities can bring your camping trip to the next level. And being away from the city, this seems like the perfect place to light some up! If you want, you can get close to the box and press your right Trigger button to get them going.
+      audio: {fileID: 0}
+      subtitleCues:
+      - text: 'On special occasions, fireworks and festivities can bring your camping trip to the next level. '
+        startSeconds: 0
+      - text: 'And being away from the city, this seems like the perfect place to light some up! '
+        startSeconds: -1
+      - text: If you want, you can get close to the box and press your right Trigger button to get them going.
+        startSeconds: -1
+  - id: camp.return-held
+    paragraphs:
+    - text: Alright I'm ready to go back whenever you are. But! My portal doesn't go to a designated smoking area on campus. So you can't bring that cigarette with you.
+      audio: {fileID: 0}
+      subtitleCues:
+      - text: 'Alright I''m ready to go back whenever you are. But! '
+        startSeconds: 0
+      - text: My portal doesn't go to a designated smoking area on campus. So you can't bring that cigarette with you.
+        startSeconds: -1
+  - id: camp.return
+    paragraphs:
+    - text: What a fun time! Follow me back to campus whenever you are ready.
+      audio: {fileID: 0}
+      subtitleCues:
+      - text: What a fun time! Follow me back to campus whenever you are ready.
+        startSeconds: 0
+  - id: ending.good
+    paragraphs:
+    - text: And we are back! Your actions in the campsite kept the campus safe.
+      audio: {fileID: 0}
+      subtitleCues:
+      - text: And we are back! Your actions in the campsite kept the campus safe.
+        startSeconds: 0
+    - text: But it very easily could have been different.
+      audio: {fileID: 0}
+      subtitleCues:
+      - text: But it very easily could have been different.
+        startSeconds: 0
+    - text: Did you know that around 40% of BC forest fires are caused by humans? This includes fires from people discarding burning items like cigarettes, not extinguishing campfires properly, and lighting fireworks, all especially during firebans.
+      audio: {fileID: 0}
+      subtitleCues:
+      - text: 'Did you know that around 40% of BC forest fires are caused by humans? '
+        startSeconds: 0
+      - text: 'This includes fires from people discarding burning items like cigarettes, not extinguishing campfires '
+        startSeconds: -1
+      - text: properly, and lighting fireworks, all especially during firebans.
+        startSeconds: -1
+    - text: You avoided risks and even helped fix some of the careless decisions I made! Thank you!
+      audio: {fileID: 0}
+      subtitleCues:
+      - text: You avoided risks and even helped fix some of the careless decisions I made! Thank you!
+        startSeconds: 0
+    - text: Enter this last portal to see what could have happened to our campus if you were less responsible.
+      audio: {fileID: 0}
+      subtitleCues:
+      - text: Enter this last portal to see what could have happened to our campus if you were less responsible.
+        startSeconds: 0
+  - id: ending.bad
+    paragraphs:
+    - text: And we are back! But something has changed... GASP! Look around!
+      audio: {fileID: 0}
+      subtitleCues:
+      - text: And we are back! But something has changed... GASP! Look around!
+        startSeconds: 0
+    - text: Did you know that around 40% of BC forest fires are caused by humans? This includes fires from people discarding burning items like cigarettes, not extinguishing campfires properly, and lighting fireworks, all especially during firebans.
+      audio: {fileID: 0}
+      subtitleCues:
+      - text: 'Did you know that around 40% of BC forest fires are caused by humans? '
+        startSeconds: 0
+      - text: 'This includes fires from people discarding burning items like cigarettes, not extinguishing campfires '
+        startSeconds: -1
+      - text: properly, and lighting fireworks, all especially during firebans.
+        startSeconds: -1
+    - text: We totally did some of that on our camping trip. Thank goodness this is just virtual reality and our developers can clean this up!
+      audio: {fileID: 0}
+      subtitleCues:
+      - text: 'We totally did some of that on our camping trip. Thank goodness this is just virtual reality and our '
+        startSeconds: 0
+      - text: developers can clean this up!
+        startSeconds: -1
+    - text: But next time you go camping for real, be responsible. Keep our campus and city safe with each small decision you make.
+      audio: {fileID: 0}
+      subtitleCues:
+      - text: 'But next time you go camping for real, be responsible. '
+        startSeconds: 0
+      - text: Keep our campus and city safe with each small decision you make.
+        startSeconds: -1
+    - text: Ok, I'm going to leave now, but you can can stay here with the consequences of your actions. Toodles!
+      audio: {fileID: 0}
+      subtitleCues:
+      - text: Ok, I'm going to leave now, but you can can stay here with the consequences of your actions. Toodles!
+        startSeconds: 0

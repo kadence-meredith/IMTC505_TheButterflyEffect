@@ -100,7 +100,7 @@ public void ClearFinalResults()
                 if (behaviour is IPrototypeResettable resettable) resettable.ResetPrototype();
             if (player != null)
             {
-                player.GoToStation(0);
+                player.ResetToStation(0);
                 player.GrabStartingCigarette();
                 // Equipping the starting item is setup, not a player action.
                 state.itemsPickedUp = 0; state.totalActions = 0;

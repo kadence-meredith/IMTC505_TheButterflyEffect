@@ -150,6 +150,7 @@ namespace ButterflyEffect.Guidance.Editor
             Require(panel.playerCamera == camera && guide.user == camera.transform,
                 prefix + "Panel and butterfly must follow the actual XR head.");
             Require(!guide.user.IsChildOf(guide.transform), prefix + "The butterfly must not own or move the player.");
+            if (bridge.scriptedNarration) ValidateScriptedScene(scene, bridge, camera, prefix);
 
             var canvases = view.GetComponentsInChildren<Canvas>(true).Where(c => c.gameObject.activeInHierarchy).ToArray();
             Require(canvases.Length == 1, prefix + "Expected a single dialogue canvas.");
@@ -222,6 +223,71 @@ namespace ButterflyEffect.Guidance.Editor
                 Require(Active<SceneChanger>(scene).Length == 0,
                     prefix + "A legacy fixed-ending scene changer can race the physical-result return portal.");
                 Require(coordinator.routeEdges.Length > 0, prefix + "Campsite routes have no authored waypoint graph.");
+            }
+        }
+
+        private static void ValidateScriptedScene(Scene scene, GuidanceSceneBridge bridge, Camera camera, string prefix)
+        {
+            var narrators = Active<GuidanceNarrator>(scene);
+            var flows = Active<GuidanceStoryFlow>(scene);
+            Require(narrators.Length == 1 && flows.Length == 1,
+                prefix + "Scripted narration needs one narrator and one story flow.");
+            var narrator = narrators[0];
+            var flow = flows[0];
+            var savedLibrary = AssetDatabase.LoadAssetAtPath<GuidanceNarrationLibrary>(GuidanceNarrationBuilder.LibraryPath);
+            Require(narrator.view == bridge.view && narrator.library != null && narrator.library == savedLibrary
+                && flow.narrator == narrator && flow.bridge == bridge && bridge.storyFlow == flow,
+                prefix + "Narration, saved text library and scene bridge bindings disagree.");
+            Require(narrator.source != null && narrator.source.isActiveAndEnabled
+                && !narrator.source.playOnAwake && !narrator.source.loop
+                && narrator.GetComponents<AudioSource>().Length == 1,
+                prefix + "Narration must use one controlled voice source without automatic playback.");
+            Require(narrator.library.groups != null && narrator.library.groups.Length > 0
+                && narrator.library.groups.All(group => group != null && !string.IsNullOrEmpty(group.id)
+                    && group.paragraphs != null && group.paragraphs.Length > 0
+                    && group.paragraphs.All(paragraph => paragraph != null && !string.IsNullOrEmpty(paragraph.text))),
+                prefix + "A saved narration group or paragraph is missing.");
+            if (bridge.role == GuidanceSceneRole.Campsite)
+            {
+                var sequences = Active<GuidanceCampsiteSequence>(scene);
+                var constraints = Active<GuidanceLocomotionConstraint>(scene);
+                var modes = Active<GuidancePlayerMode>(scene);
+                Require(bridge.sequentialExploration && sequences.Length == 1 && constraints.Length == 1 && modes.Length == 1
+                    && bridge.campsiteSequence == sequences[0] && sequences[0].narrator == narrator
+                    && modes[0].xrOrigin != null && constraints[0].origin == modes[0].xrOrigin,
+                    prefix + "The ordered Begin sequence or VR locomotion binding is incomplete.");
+                var sequence = sequences[0];
+                var setup = bridge.setup;
+                Require(sequence.tentExit != null && setup != null && setup.playerSpawn != null
+                    && setup.player != null && setup.player.stationSpawns != null
+                    && setup.player.stationSpawns.Length > 0 && setup.player.stationSpawns[0] == setup.playerSpawn,
+                    prefix + "The camp opening is missing its tent-exit gate or inside-tent reset spawn.");
+                Vector3 outward = Vector3.ProjectOnPlane(sequence.tentExit.forward, Vector3.up).normalized;
+                Require(outward.sqrMagnitude > .99f
+                    && Vector3.Dot(setup.playerSpawn.position - sequence.tentExit.position, outward) < -.1f
+                    && Vector3.Dot(camera.transform.position - sequence.tentExit.position, outward) < -.1f
+                    && Vector3.Dot(setup.playerSpawn.forward, outward) > .95f,
+                    prefix + "Desktop or authored VR starts outside the tent, or the desktop spawn faces away from its exit.");
+                var cigarette = bridge.coordinator.stations.FirstOrDefault(station => station != null
+                    && station.dialoguePrefixes != null && station.dialoguePrefixes.Contains("cigarette."))?.target;
+                Require(cigarette != null
+                    && Vector3.Dot(cigarette.position - sequence.tentExit.position, outward) > .1f,
+                    prefix + "The first cigarette introduction marker is still inside the tent.");
+            }
+            else if (bridge.role == GuidanceSceneRole.CampusStart || bridge.ending == GuidanceEnding.Thriving)
+            {
+                var ownedRoot = scene.GetRootGameObjects().Single(root => root.name == GuidanceMainSceneBuilder.OwnedRootName);
+                var ownedPortals = ownedRoot.GetComponentsInChildren<GuidanceCampusPortal>(true);
+                Require(ownedPortals.Length == 1 && ownedPortals[0] == flow.storyPortal
+                    && ownedPortals[0].isActiveAndEnabled,
+                    prefix + "Expected one active owned narrative portal; repeated authoring left a duplicate or stale portal.");
+                string expected = bridge.role == GuidanceSceneRole.CampusStart ? "1_Campsite_Main" : "4_CampusFire_Main";
+                Require(flow.storyPortal != null && flow.storyPortal.isActiveAndEnabled
+                    && flow.storyPortal.user == camera.transform && flow.storyPortal.playerRoot != null
+                    && flow.storyPortal.targetSceneName == expected,
+                    prefix + "The narrative portal is not bound to the actual player and destination.");
+                Require(flow.storyPortal.silentComparison == (bridge.role == GuidanceSceneRole.CampusEnding),
+                    prefix + "The final comparison portal has the wrong narration mode.");
             }
         }
 

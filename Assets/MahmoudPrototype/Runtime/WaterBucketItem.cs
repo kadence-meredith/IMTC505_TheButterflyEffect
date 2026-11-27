@@ -23,7 +23,8 @@ namespace ButterflyEffect.Prototype
         {
             if (IsHeld && !HeldInXR)
                 desktopTiltAngle = Mathf.MoveTowards(desktopTiltAngle, desktopPour ? 75f : 0f, Time.deltaTime * 240f);
-            bool pouring = IsHeld && waterLeft > 0f && spout != null && Vector3.Angle(transform.up, Vector3.up) > 45f;
+            bool pouring = IsHeld && PrototypeInteractionPolicy.CanUse(this) && waterLeft > 0f
+                && spout != null && Vector3.Angle(transform.up, Vector3.up) > 45f;
             if (stream != null) stream.enabled = pouring;
             if (waterSurface != null) waterSurface.gameObject.SetActive(waterLeft > 0.02f);
             if (pouring && !wasPouring && Session != null)
@@ -50,6 +51,7 @@ namespace ButterflyEffect.Prototype
 
         public override void Use()
         {
+            if (!PrototypeInteractionPolicy.CanUse(this)) return;
             if (refillPoint == null || Vector3.Distance(transform.position, refillPoint.position) > 1.8f || waterLeft >= capacity - 0.01f) return;
             waterLeft = capacity;
             if (Session != null) { Session.state.bucketRefills++; Session.state.totalActions++; Session.Changed(); }

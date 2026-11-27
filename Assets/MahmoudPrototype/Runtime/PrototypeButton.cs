@@ -10,6 +10,7 @@ namespace ButterflyEffect.Prototype
         private float nextPress;
         public void Press()
         {
+            if (!PrototypeInteractionPolicy.CanPress(this)) return;
             if (Time.time < nextPress) return;
             nextPress = Time.time + 0.3f;
             onPressed.Invoke();

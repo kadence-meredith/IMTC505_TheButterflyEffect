@@ -45,6 +45,7 @@ namespace ButterflyEffect.Guidance.Editor
                 var events = new GameObject("Keyboard validation EventSystem", typeof(EventSystem), typeof(XRUIInputModule));
                 ValidateNewCampusPlayer(temporary);
                 ValidateExistingCampsitePlayer(temporary);
+                ValidateScriptedCampsiteSpawn(temporary);
                 ValidateActivePreviewPlayer(temporary);
                 ValidateXRPlayer(temporary);
             }
@@ -110,6 +111,56 @@ namespace ButterflyEffect.Guidance.Editor
                 CheckDesktopBindings(fixture);
                 fixture.Mode.ApplyMode();
                 CheckDesktopBindings(fixture);
+            }
+        }
+
+        private static void ValidateScriptedCampsiteSpawn(Scene scene)
+        {
+            using (var fixture = new Fixture(scene, true, false))
+            {
+                fixture.Bridge.scriptedNarration = true;
+                Transform spawn = fixture.Setup.playerSpawn;
+                spawn.SetPositionAndRotation(new Vector3(-.746f, .1038f, .14f), Quaternion.Euler(0f, 48.58f, 0f));
+                var later = new GameObject("Later station spawn").transform;
+                later.SetParent(fixture.Root.transform, false);
+                var oldSpawns = new[] { later, later };
+                fixture.ExistingPlayer.stationSpawns = oldSpawns;
+                fixture.Mode.mode = GuidanceControlMode.Desktop;
+                fixture.Mode.ApplyMode();
+                var player = fixture.ExistingPlayer;
+                Require(Vector3.Distance(player.transform.position, spawn.position) < .001f
+                    && Quaternion.Angle(player.transform.rotation, spawn.rotation) < .001f,
+                    "The narrated campsite ignored its inside-tent starting pose.");
+                Require(player.stationSpawns != oldSpawns && oldSpawns[0] == later
+                    && player.stationSpawns.Length == 2 && player.stationSpawns[0] == spawn
+                    && player.stationSpawns[1] == later,
+                    "The campsite reset spawn was not aligned or changed later authored station spawns.");
+                Vector3 moved = player.transform.position + new Vector3(.3f, 0f, .2f);
+                player.transform.position = moved;
+                fixture.Mode.ApplyMode();
+                Require(player.transform.position == moved,
+                    "Reapplying narrated player mode moved an already active player back inside the tent.");
+                typeof(DesktopPlayer).GetMethod("Awake", System.Reflection.BindingFlags.Instance
+                    | System.Reflection.BindingFlags.NonPublic)?.Invoke(player, null);
+                player.ResetToStation(0);
+                Require(Vector3.Distance(player.transform.position, spawn.position) < .001f
+                    && Quaternion.Angle(player.transform.rotation, spawn.rotation) < .001f,
+                    "Restarting the camp returned the player outside instead of to its inside-tent spawn.");
+                CheckDesktopBindings(fixture);
+            }
+            using (var fixture = new Fixture(scene, true, false))
+            {
+                fixture.Bridge.scriptedNarration = true;
+                Vector3 position = fixture.Origin.transform.position;
+                Quaternion rotation = fixture.Origin.transform.rotation;
+                Vector3 headOffset = fixture.XRCamera.transform.localPosition;
+                fixture.Mode.mode = GuidanceControlMode.XR;
+                fixture.Mode.ApplyMode();
+                Require(fixture.Mode.PlayerCamera == fixture.XRCamera && !fixture.Mode.IsDesktop
+                    && fixture.Origin.transform.position == position
+                    && Quaternion.Angle(fixture.Origin.transform.rotation, rotation) < .001f
+                    && fixture.XRCamera.transform.localPosition == headOffset,
+                    "The narrated desktop spawn fix moved the authored VR rig or headset offset.");
             }
         }
 

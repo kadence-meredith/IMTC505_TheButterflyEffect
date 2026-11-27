@@ -25,6 +25,7 @@ namespace ButterflyEffect.Prototype
 
         public override void Grabbed(bool xr)
         {
+            if (!PrototypeInteractionPolicy.CanGrab(this)) return;
             base.Grabbed(xr);
             groundTime = 0f;
             if (Session != null) { Session.state.RecordCigarette(CigaretteCondition.Held); Session.Changed(); }

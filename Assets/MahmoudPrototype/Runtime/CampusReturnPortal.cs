@@ -11,6 +11,8 @@ namespace ButterflyEffect.Prototype
         public string destroyedCampus = "4_CampusFire_Main";
 
         private bool loading;
+        public bool CanReturnNow => !loading && !PrototypeInteractionPolicy.ReturnInProgress
+            && PrototypeInteractionPolicy.CanReturn();
 
         private void OnTriggerEnter(Collider other)
         {
@@ -34,7 +36,7 @@ namespace ButterflyEffect.Prototype
         [ContextMenu("Return To Campus")]
         public void ReturnToCampus()
         {
-            if (!Application.isPlaying || loading)
+            if (!Application.isPlaying || !CanReturnNow)
                 return;
 
             PrototypeSession session = PrototypeSession.Instance;
@@ -81,6 +83,7 @@ namespace ButterflyEffect.Prototype
             }
 
             bool alreadyCaptured = session.hasFinalResult;
+            if (!PrototypeInteractionPolicy.TryBeginReturn()) return;
             loading = true;
 
             try
@@ -107,6 +110,7 @@ namespace ButterflyEffect.Prototype
             catch (System.Exception exception)
             {
                 loading = false;
+                PrototypeInteractionPolicy.CancelReturn();
 
                 if (!alreadyCaptured)
                     session.ClearFinalResults();

@@ -13,6 +13,9 @@ namespace ButterflyEffect.Prototype
         private MaterialPropertyBlock properties;
         private static readonly int BaseColor = Shader.PropertyToID("_BaseColor");
         private static readonly int ColorId = Shader.PropertyToID("_Color");
+        public bool RequireServingChoice { get; set; }
+        public bool IsServingConsumed { get; private set; }
+        public int ServingRevision { get; private set; }
         public bool IsGolden => cookedSeconds >= goldenSeconds && cookedSeconds < burntSeconds;
         public override string HeldHint => "F: eat | E: put down";
         protected override void Awake() { base.Awake(); properties = new MaterialPropertyBlock(); }
@@ -20,10 +23,10 @@ namespace ButterflyEffect.Prototype
         private void Update()
         {
             if (marshmallow == null || roastPoint == null) return;
-            if (nextServingTime > 0f)
+            if (IsServingConsumed)
             {
-                if (Time.time < nextServingTime) return;
-                nextServingTime = 0f; cookedSeconds = 0f; marshmallow.enabled = true;
+                if (RequireServingChoice || Time.time < nextServingTime) return;
+                StartNewServing();
             }
             if (IsHeld)
                 foreach (FireTarget fire in FireTarget.ActiveTargets)
@@ -46,8 +49,12 @@ namespace ButterflyEffect.Prototype
 
         public override void Use()
         {
-            if (nextServingTime > 0f || marshmallow == null) return;
-            // The player decides when to eat. No readiness gate, text, timer, or progress bar.
+            if (!PrototypeInteractionPolicy.CanUse(this)) return;
+            if (IsServingConsumed || marshmallow == null) return;
+            IsServingConsumed = true;
+            ServingRevision++;
+            marshmallow.enabled = false;
+            nextServingTime = Time.time + 0.8f;
             if (Session != null)
             {
                 Session.state.marshmallowsEaten++; Session.state.totalActions++;
@@ -56,11 +63,29 @@ namespace ButterflyEffect.Prototype
                 else Session.state.goldenMarshmallowsEaten++;
                 Session.Changed();
             }
-            marshmallow.enabled = false; nextServingTime = Time.time + 0.8f;
+        }
+
+        public bool TryStartNewServing()
+        {
+            if (!PrototypeInteractionPolicy.CanUse(this) || marshmallow == null) return false;
+            StartNewServing();
+            return true;
+        }
+
+        private void StartNewServing()
+        {
+            cookedSeconds = 0f;
+            nextServingTime = 0f;
+            IsServingConsumed = false;
+            ServingRevision++;
+            marshmallow.enabled = true;
+            ApplyColour();
         }
         public override void ResetPrototype()
         {
             base.ResetPrototype(); cookedSeconds = 0f; nextServingTime = 0f;
+            IsServingConsumed = false;
+            ServingRevision++;
             if (marshmallow != null) marshmallow.enabled = true;
             ApplyColour();
         }

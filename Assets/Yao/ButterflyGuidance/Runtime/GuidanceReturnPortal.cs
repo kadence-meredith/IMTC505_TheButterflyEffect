@@ -47,15 +47,26 @@ namespace ButterflyEffect.Guidance
 
         public bool TryEnter()
         {
-            if (IsTransitioning || !IsArmed || user == null) return false;
+            if (IsTransitioning || !IsArmed || user == null || !PrototypeInteractionPolicy.CanReturn()) return false;
             Vector3 delta = user.position - transform.position;
             delta.y = 0;
             if (delta.magnitude > enterRadius) return false;
             string scene = ResolveEndingScene();
             if (string.IsNullOrEmpty(scene) || !Application.CanStreamedLevelBeLoaded(scene)) return false;
+            if (!PrototypeInteractionPolicy.TryBeginReturn()) return false;
             IsTransitioning = true;
-            SceneManager.LoadSceneAsync(scene);
-            return true;
+            var session = PrototypeSession.Instance;
+            bool captured = session != null && session.hasFinalResult;
+            try
+            {
+                if (session != null && !captured) session.CaptureFinalResults();
+                if (SceneManager.LoadSceneAsync(scene) != null) return true;
+            }
+            catch (System.Exception error) { Debug.LogException(error, this); }
+            if (session != null && !captured) session.ClearFinalResults();
+            IsTransitioning = false;
+            PrototypeInteractionPolicy.CancelReturn();
+            return false;
         }
     }
 }

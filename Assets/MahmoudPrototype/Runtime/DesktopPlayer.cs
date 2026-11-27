@@ -57,8 +57,11 @@ namespace ButterflyEffect.Prototype
             move = transform.TransformDirection(Vector3.ClampMagnitude(move, 1f)) * speed;
             if (motor.isGrounded && verticalSpeed < 0f) verticalSpeed = -2f;
             verticalSpeed += Physics.gravity.y * Time.deltaTime;
-            motor.Move((move + Vector3.up * verticalSpeed) * Time.deltaTime);
-            if (transform.position.y < -8f) GoToStation(0);
+            Vector3 translation = move * Time.deltaTime;
+            if (!PrototypeInteractionPolicy.CanMove(transform.position, transform.position + translation))
+                translation = Vector3.zero;
+            motor.Move(translation + Vector3.up * (verticalSpeed * Time.deltaTime));
+            if (transform.position.y < -8f) ResetToStation(0);
 
             ScanTarget();
             if (keys.eKey.wasPressedThisFrame)
@@ -68,12 +71,12 @@ namespace ButterflyEffect.Prototype
             }
             if (keys.fKey.wasPressedThisFrame)
             {
-                if (Held != null) Held.Use();
+                if (Held != null && PrototypeInteractionPolicy.CanUse(Held)) Held.Use();
                 else if (targetButton != null) targetButton.Press();
             }
             if (Held != null)
             {
-                Held.DesktopTilt(keys.rKey.isPressed);
+                Held.DesktopTilt(keys.rKey.isPressed && PrototypeInteractionPolicy.CanUse(Held));
                 if (keys.qKey.wasPressedThisFrame) aimingThrow = true;
                 if (aimingThrow && keys.qKey.wasReleasedThisFrame) DropHeld(true);
             }
@@ -136,6 +139,7 @@ namespace ButterflyEffect.Prototype
         public void Grab(PrototypeItem item)
         {
             if (Held != null || item == null || item.IsHeld || view == null || !item.gameObject.activeInHierarchy) return;
+            if (!PrototypeInteractionPolicy.CanGrab(item)) return;
             XrItemBridge bridge = item.GetComponent<XrItemBridge>();
             if (bridge != null && !bridge.TryAcquireDesktopControl()) return;
             Held = item;
@@ -218,8 +222,19 @@ namespace ButterflyEffect.Prototype
 
         public void GoToStation(int index)
         {
+            MoveToStation(index, false);
+        }
+
+        public void ResetToStation(int index)
+        {
+            MoveToStation(index, true);
+        }
+
+        private void MoveToStation(int index, bool resetting)
+        {
             if (stationSpawns == null || index < 0 || index >= stationSpawns.Length || stationSpawns[index] == null) return;
             Transform spawn = stationSpawns[index];
+            if (!resetting && !PrototypeInteractionPolicy.CanMove(transform.position, spawn.position)) return;
             motor.enabled = false; transform.SetPositionAndRotation(spawn.position, spawn.rotation); motor.enabled = true;
             verticalSpeed = 0f; pitch = 8f; view.transform.localRotation = Quaternion.Euler(pitch, 0f, 0f);
             RefreshHeldPose();
@@ -242,9 +257,10 @@ private void OnGUI()
         Texture2D.whiteTexture
     );
 
-    GUI.color = targetItem != null || targetButton != null
-        ? Color.green
-        : Color.white;
+    bool canInteract = Held == null &&
+        (targetItem != null && !targetItem.IsHeld && PrototypeInteractionPolicy.CanGrab(targetItem)
+            || targetButton != null && PrototypeInteractionPolicy.CanPress(targetButton));
+    GUI.color = canInteract ? Color.green : Color.white;
 
     GUI.DrawTexture(
         new Rect(x - 2f, y - 2f, 4f, 4f),

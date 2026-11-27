@@ -37,6 +37,7 @@ namespace ButterflyEffect.Prototype
 
         public virtual void Grabbed(bool xr)
         {
+            if (!PrototypeInteractionPolicy.CanGrab(this)) return;
             IsHeld = true;
             HeldInXR = xr;
             if (Session != null) { Session.state.itemsPickedUp++; Session.state.totalActions++; Session.Changed(); }

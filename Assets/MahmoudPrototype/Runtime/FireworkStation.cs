@@ -19,6 +19,7 @@ namespace ButterflyEffect.Prototype
         private void Awake() { rocketOrigin = rocket.localPosition; rocket.gameObject.SetActive(false); }
         public void Launch()
         {
+            if (!PrototypeInteractionPolicy.CanLaunch(this)) return;
             PrototypeSession session = PrototypeSession.Instance;
             if (IsLaunching) { if (session != null) session.Say("Look up. The show is still running."); return; }
             if (session != null) { session.state.RecordFirework(); session.Say("Look up. The show's starting."); }
@@ -27,6 +28,7 @@ namespace ButterflyEffect.Prototype
 
         public void LeaveUnlit()
         {
+            if (!PrototypeInteractionPolicy.CanLaunch(this)) return;
             PrototypeSession session = PrototypeSession.Instance;
             if (session != null) session.Say(session.state.fireworksEverLaunched
                 ? "You leave the remaining fireworks alone. Your earlier launch is still recorded."
